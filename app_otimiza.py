@@ -1,3 +1,8 @@
+pip install pandas
+pip install plotly
+pip install numpy
+pip install setreamlit
+
 import streamlit as st
 import pandas as pd
 import plotly.express as px
@@ -145,4 +150,5 @@ with c4:
     st.plotly_chart(fig_heat, use_container_width=True)
 
 st.markdown("---")
+
 st.caption("Módulo de Inteligência Otimiza v1.1 | Dados atualizados em tempo real via API.")
