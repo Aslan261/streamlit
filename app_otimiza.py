@@ -1,14 +1,8 @@
-pip install pandas
-pip install plotly
-pip install numpy
-pip install setreamlit
-
 import streamlit as st
 import pandas as pd
 import plotly.express as px
 import numpy as np
 from datetime import datetime, timedelta
-
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
     page_title="Módulo Inteligência Otimiza",
@@ -152,3 +146,4 @@ with c4:
 st.markdown("---")
 
 st.caption("Módulo de Inteligência Otimiza v1.1 | Dados atualizados em tempo real via API.")
+
