@@ -1,148 +1,246 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import numpy as np
 from datetime import datetime, timedelta
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Módulo Inteligência Otimiza",
+    page_title="Otimiza Intelligence",
     page_icon="🚗",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Estilo CSS customizado
+# --- 2. ESTILIZAÇÃO CSS (A MÁGICA ACONTECE AQUI) ---
+# Aqui definimos as cores da imagem de referência:
+# Teal Principal: #17A2B8 (ou variante mais suave)
+# Fundo: #F4F6F9
+# Cards: #FFFFFF com sombra suave
 st.markdown("""
     <style>
-        .block-container {padding-top: 1rem; padding-bottom: 0rem;}
-        #MainMenu {visibility: hidden;}
-        footer {visibility: hidden;}
+        /* Importando fonte Google (opcional, deixa mais moderno) */
+        @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;700&display=swap');
+
+        /* Fundo Geral */
+        .stApp {
+            background-color: #F4F6F9;
+            font-family: 'Roboto', sans-serif;
+        }
+
+        /* Remover padding excessivo do topo */
+        .block-container {
+            padding-top: 1rem;
+            padding-bottom: 2rem;
+        }
+
+        /* Estilo dos Cards (Caixas Brancas) */
+        .css-card {
+            border-radius: 15px;
+            padding: 20px;
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+        }
+
+        /* Card de Destaque (Teal - Total Balance style) */
+        .css-highlight-card {
+            border-radius: 15px;
+            padding: 20px;
+            background: linear-gradient(135deg, #20B2AA 0%, #008080 100%);
+            color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .css-highlight-card h3 {
+            color: white !important;
+            font-size: 1rem;
+            font-weight: 300;
+            margin: 0;
+        }
+        
+        .css-highlight-card h1 {
+            color: white !important;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 0;
+        }
+
+        /* Métricas pequenas */
+        .metric-label {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+        .metric-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        /* Ajuste da Sidebar */
+        section[data-testid="stSidebar"] {
+            background-color: #FFFFFF;
+            border-right: 1px solid #E0E0E0;
+        }
     </style>
 """, unsafe_allow_html=True)
 
-# --- 2. SIMULAÇÃO DE DADOS ---
+# --- 3. DADOS (Mantidos do anterior) ---
 @st.cache_data
 def load_data():
     np.random.seed(42)
     dates = [datetime.now() - timedelta(days=x) for x in range(30)]
-    
     data = []
     vistoriadores = ['Carlos Silva', 'Ana Souza', 'Roberto Dias', 'Fernanda Lima']
     resultados = ['Aprovado', 'Reprovado', 'Aprovado com Restrição']
     
     for _ in range(500):
         dt = np.random.choice(dates)
-        hora = np.random.randint(8, 18) 
-        dt_full = dt.replace(hour=hora, minute=np.random.randint(0, 59))
-        
         data.append({
             'id_laudo': np.random.randint(10000, 99999),
-            'data_hora': dt_full,
+            'data': dt,
             'vistoriador': np.random.choice(vistoriadores),
             'resultado': np.random.choice(resultados, p=[0.7, 0.2, 0.1]),
-            'tempo_execucao_min': np.random.normal(25, 5),
-            'valor_servico': np.random.choice([100, 120, 150])
+            'valor': np.random.choice([100, 120, 150])
         })
     
     df = pd.DataFrame(data)
-    df['data_hora'] = pd.to_datetime(df['data_hora'])
-    df['dia'] = df['data_hora'].dt.date
-    df['hora'] = df['data_hora'].dt.hour
-    return df
+    df['data'] = pd.to_datetime(df['data'])
+    df['dia_str'] = df['data'].dt.strftime('%d/%m')
+    return df.sort_values('data')
 
 df = load_data()
 
-# --- 3. BARRA LATERAL ---
+# --- 4. SIDEBAR (Perfil do Usuário) ---
 with st.sidebar:
-    st.image("https://cdn-icons-png.flaticon.com/512/2554/2554936.png", width=50)
-    st.title("Filtros Operacionais")
+    # Simulando o perfil "Hue Brew" da imagem
+    col_perfil_1, col_perfil_2 = st.columns([1, 3])
+    with col_perfil_1:
+        st.image("https://cdn-icons-png.flaticon.com/512/3135/3135715.png", width=50)
+    with col_perfil_2:
+        st.markdown("**Gestor Otimiza**<br><span style='color:grey; font-size:0.8em'>Admin</span>", unsafe_allow_html=True)
     
-    min_date = df['dia'].min()
-    max_date = df['dia'].max()
-    date_range = st.date_input("Período de Análise", [min_date, max_date])
+    st.markdown("---")
+    st.markdown("### Menu")
+    st.button("📊 Dashboard Geral", use_container_width=True)
+    st.button("💰 Financeiro", use_container_width=True)
+    st.button("👥 Equipe", use_container_width=True)
+    st.button("⚙️ Configurações", use_container_width=True)
+
+    # Filtro Rápido
+    st.markdown("---")
+    st.markdown("### Filtros")
+    vistoriador_sel = st.multiselect("Vistoriador", df['vistoriador'].unique())
+
+# Filtragem
+if vistoriador_sel:
+    df = df[df['vistoriador'].isin(vistoriador_sel)]
+
+# --- 5. LAYOUT PRINCIPAL (GRID) ---
+
+# Título discreto
+st.markdown("## Visão Geral da Operação")
+
+# --- LINHA SUPERIOR (BIG NUMBERS + GRÁFICO PRINCIPAL) ---
+col_left, col_right = st.columns([1, 2])
+
+with col_left:
+    # CARTÃO DE DESTAQUE (Imitando o cartão Verde/Teal da imagem)
+    faturamento_total = df['valor'].sum()
+    st.markdown(f"""
+        <div class="css-highlight-card">
+            <h3>Faturamento Acumulado</h3>
+            <h1>R$ {faturamento_total:,.2f}</h1>
+            <p style="margin-top:10px; font-size:0.9rem">
+                <span style="background-color:rgba(255,255,255,0.2); padding:2px 8px; border-radius:10px">
+                +12% vs mês anterior
+                </span>
+            </p>
+        </div>
+    """, unsafe_allow_html=True)
+
+    # LISTA DE "ÚLTIMAS TRANSAÇÕES" (Imitando a lista "Income" da imagem)
+    st.markdown('<div class="css-card"><h5>Últimas Vistorias</h5>', unsafe_allow_html=True)
     
-    vistoriador_filter = st.multiselect(
-        "Selecionar Vistoriador", 
-        options=df['vistoriador'].unique(),
-        default=df['vistoriador'].unique()
+    recentes = df.tail(4).sort_values('data', ascending=False)
+    for index, row in recentes.iterrows():
+        # Ícone condicional
+        icon = "✅" if row['resultado'] == 'Aprovado' else "⚠️"
+        st.markdown(f"""
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px; border-bottom:1px solid #eee; padding-bottom:5px">
+                <div>
+                    <span style="font-size:1.2rem; margin-right:10px">{icon}</span>
+                    <b>{row['vistoriador']}</b><br>
+                    <span style="color:grey; font-size:0.8rem">Laudo #{row['id_laudo']} • {row['dia_str']}</span>
+                </div>
+                <div style="text-align:right">
+                    <span style="color:#20B2AA; font-weight:bold">+ R$ {row['valor']}</span>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+    st.markdown('</div>', unsafe_allow_html=True)
+
+with col_right:
+    # GRÁFICO PRINCIPAL (Imitando o gráfico de área da imagem)
+    st.markdown('<div class="css-card">', unsafe_allow_html=True)
+    st.subheader("Volume Diário de Laudos")
+    
+    df_day = df.groupby('dia_str')['id_laudo'].count().reset_index()
+    
+    # Gráfico de Área com gradiente (estilo moderno)
+    fig = px.area(df_day, x='dia_str', y='id_laudo', 
+                  color_discrete_sequence=['#20B2AA']) # Cor Teal
+    
+    fig.update_layout(
+        plot_bgcolor='white',
+        paper_bgcolor='white',
+        margin=dict(t=10, b=10, l=10, r=10),
+        xaxis=dict(showgrid=False, title=None),
+        yaxis=dict(showgrid=True, gridcolor='#f0f0f0', title=None),
+        height=350
     )
+    st.plotly_chart(fig, use_container_width=True)
+    st.markdown('</div>', unsafe_allow_html=True)
 
-if len(date_range) == 2:
-    mask = (df['dia'] >= date_range[0]) & (df['dia'] <= date_range[1]) & (df['vistoriador'].isin(vistoriador_filter))
-    df_filtered = df.loc[mask]
-else:
-    df_filtered = df.loc[df['vistoriador'].isin(vistoriador_filter)]
+    # LINHA INTERMEDIÁRIA (Pequenos Cards de Métricas)
+    c1, c2 = st.columns(2)
+    with c1:
+        st.markdown(f"""
+            <div class="css-card" style="text-align:center">
+                <span class="metric-label">Ticket Médio</span><br>
+                <span class="metric-value">R$ {df['valor'].mean():.2f}</span>
+                <span style="color:green; font-size:0.8rem">↗</span>
+            </div>
+        """, unsafe_allow_html=True)
+    with c2:
+        reprovados = len(df[df['resultado'] == 'Reprovado'])
+        st.markdown(f"""
+            <div class="css-card" style="text-align:center">
+                <span class="metric-label">Reprovações</span><br>
+                <span class="metric-value">{reprovados}</span>
+                <span style="color:red; font-size:0.8rem">↘ Atenção</span>
+            </div>
+        """, unsafe_allow_html=True)
 
-# --- 4. DASHBOARD PRINCIPAL ---
+# --- LINHA INFERIOR (CARDS HORIZONTAIS - Imitando "Investments") ---
+st.markdown("### Performance por Vistoriador")
 
-st.header("📊 Painel Operacional - Vistoria Veicular")
+cols = st.columns(4)
+stats_vistoriador = df.groupby('vistoriador')['id_laudo'].count().sort_values(ascending=False)
 
-# 4.1 KPIs
-col1, col2, col3, col4 = st.columns(4)
-
-with col1:
-    total_laudos = len(df_filtered)
-    st.metric("Total de Laudos", total_laudos)
-
-with col2:
-    tempo_medio = df_filtered['tempo_execucao_min'].mean()
-    st.metric("Tempo Médio (min)", f"{tempo_medio:.1f}")
-
-with col3:
-    reprovacoes = df_filtered[df_filtered['resultado'] == 'Reprovado'].shape[0]
-    taxa_reprov = (reprovacoes / total_laudos) * 100 if total_laudos > 0 else 0
-    st.metric("Taxa de Reprovação", f"{taxa_reprov:.1f}%", delta_color="inverse")
-
-with col4:
-    faturamento = df_filtered['valor_servico'].sum()
-    st.metric("Receita Estimada", f"R$ {faturamento:,.2f}")
-
-st.markdown("---")
-
-# 4.2 Visualizações Gráficas
-
-c1, c2 = st.columns([2, 1])
-
-with c1:
-    st.subheader("Volume de Vistorias por Dia")
-    df_day = df_filtered.groupby('dia').size().reset_index(name='contagem')
-    fig_line = px.line(df_day, x='dia', y='contagem', markers=True, 
-                       line_shape='spline', render_mode='svg')
-    fig_line.update_layout(xaxis_title=None, yaxis_title="Qtd Laudos", template="plotly_white")
-    fig_line.update_traces(line_color='#2E8B57')
-    st.plotly_chart(fig_line, use_container_width=True)
-
-with c2:
-    st.subheader("Resultado dos Laudos")
-    # CORREÇÃO APLICADA AQUI: px.pie com hole=0.4
-    fig_pie = px.pie(df_filtered, names='resultado', hole=0.4, 
-                     color_discrete_sequence=['#2E8B57', '#E74C3C', '#F1C40F'])
-    fig_pie.update_layout(showlegend=False, margin=dict(t=0, b=0, l=0, r=0))
-    st.plotly_chart(fig_pie, use_container_width=True)
-
-c3, c4 = st.columns(2)
-
-with c3:
-    st.subheader("Produtividade por Vistoriador")
-    df_prod = df_filtered.groupby('vistoriador').agg(
-        qtd=('id_laudo', 'count'),
-        tempo_medio=('tempo_execucao_min', 'mean')
-    ).reset_index().sort_values('qtd', ascending=True)
-    
-    fig_bar = px.bar(df_prod, x='qtd', y='vistoriador', orientation='h', 
-                     text='qtd', color='tempo_medio', 
-                     color_continuous_scale='Greens')
-    fig_bar.update_layout(xaxis_title="Qtd Laudos", yaxis_title=None)
-    st.plotly_chart(fig_bar, use_container_width=True)
-
-with c4:
-    st.subheader("Mapa de Calor: Horários de Pico")
-    df_hour = df_filtered.groupby('hora').size().reset_index(name='volume')
-    fig_heat = px.bar(df_hour, x='hora', y='volume')
-    fig_heat.update_traces(marker_color='#2E8B57')
-    fig_heat.update_layout(xaxis=dict(tickmode='linear', dtick=1), title="Ocupação dos Boxes por Hora")
-    st.plotly_chart(fig_heat, use_container_width=True)
-
-st.markdown("---")
-st.caption("Módulo de Inteligência Otimiza v1.1 | Dados atualizados em tempo real via API.")
+# Criando cards dinâmicos para cada vistoriador
+i = 0
+for vistoriador, qtd in stats_vistoriador.items():
+    if i < 4: # Limite de 4 cards
+        with cols[i]:
+            st.markdown(f"""
+                <div class="css-card" style="text-align:center; border-top: 5px solid #20B2AA">
+                    <h4>{vistoriador}</h4>
+                    <h2 style="color:#20B2AA">{qtd}</h2>
+                    <p style="color:grey; font-size:0.8rem">Laudos realizados</p>
+                    <button style="background-color:#E0F7FA; border:none; color:#006064; padding:5px 10px; border-radius:5px; cursor:pointer">Ver Detalhes</button>
+                </div>
+            """, unsafe_allow_html=True)
+        i += 1
