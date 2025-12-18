@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. CSS REFINADO (SEM DIVISORES OVAIS + TAGS TEAL) ---
+# --- 2. CSS PARA ACABAMENTO FINO ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
@@ -25,7 +25,7 @@ st.markdown("""
         
         #MainMenu {visibility: hidden;}
         footer {visibility: hidden;}
-        .block-container {padding-top: 1.5rem; padding-bottom: 3rem;}
+        .block-container {padding-top: 1rem; padding-bottom: 3rem;}
 
         /* SIDEBAR */
         [data-testid="stSidebar"] {
@@ -35,52 +35,58 @@ st.markdown("""
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {color: #2B3674 !important;}
         [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {color: #A3AED0 !important;}
 
-        /* CORRIGIR COR DAS TAGS DO MULTISELECT (Tirar o vermelho) */
+        /* TAGS DA SIDEBAR (Correção de Cor) */
         span[data-baseweb="tag"] {
-            background-color: rgba(23, 162, 184, 0.15) !important; /* Fundo Teal Claro */
+            background-color: rgba(23, 162, 184, 0.15) !important;
             border: 1px solid rgba(23, 162, 184, 0.5);
         }
         span[data-baseweb="tag"] span {
-            color: #17A2B8 !important; /* Texto Teal Escuro */
+            color: #17A2B8 !important;
             font-weight: 600;
         }
 
-        /* Inputs na Sidebar */
+        /* INPUTS */
         .stSelectbox div[data-baseweb="select"] > div {
             background-color: #F4F7FE !important;
             color: #2B3674 !important;
             border: none;
-            border-radius: 10px;
+            border-radius: 8px;
         }
 
-        /* CARDS GERAIS */
+        /* CARDS UNIFICADOS */
         .css-card {
             background-color: #FFFFFF;
-            border-radius: 16px; /* Arredondamento mais sutil */
+            border-radius: 15px;
             padding: 20px;
-            box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.03); /* Sombra mais leve */
-            margin-bottom: 20px;
-            border: 1px solid #F0F0F0; /* Borda ultra sutil */
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.03);
+            margin-bottom: 0px; /* Removido margem extra */
+            height: 100%; /* Força altura igual em colunas */
+            border: 1px solid #F0F0F0;
         }
 
         /* CARD DESTAQUE (Teal) */
         .css-highlight-card {
             background: linear-gradient(135deg, #17A2B8 0%, #008080 100%);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0px 8px 20px rgba(23, 162, 184, 0.3);
-            margin-bottom: 20px;
+            border-radius: 15px;
+            padding: 20px;
+            box-shadow: 0px 6px 15px rgba(23, 162, 184, 0.25);
             color: white;
+            height: 100%;
         }
         
-        /* LINHA DIVISÓRIA CLEAN (Substitui o oval) */
-        hr.clean-divider {
-            border: 0;
-            height: 1px;
-            background-image: linear-gradient(to right, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0));
-            margin: 25px 0;
+        /* Títulos dentro dos cards */
+        .card-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: #2B3674;
+            margin-bottom: 10px;
         }
         
+        .card-subtitle {
+            font-size: 11px;
+            color: #A3AED0;
+        }
+
         /* TIPOGRAFIA */
         h1, h2, h3, h4, h5, h6, p, span, div {color: #2B3674;}
         .css-highlight-card h1, .css-highlight-card h3, .css-highlight-card div, .css-highlight-card span {color: #FFFFFF !important;}
@@ -90,7 +96,7 @@ st.markdown("""
 
 # --- 3. DADOS ---
 @st.cache_data
-def load_operational_data():
+def load_data():
     np.random.seed(42)
     dates = [datetime.now() - timedelta(days=x) for x in range(30)]
     data = []
@@ -122,7 +128,7 @@ def load_operational_data():
     df['dia_semana_curto'] = df['dia_semana'].map(dias_map)
     return df
 
-df = load_operational_data()
+df = load_data()
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
@@ -134,85 +140,56 @@ with st.sidebar:
         st.markdown("<div style='font-size:11px; color:#A3AED0;'>Chão de Fábrica</div>", unsafe_allow_html=True)
     
     st.markdown("---")
-    st.caption("FILTROS")
-    periodo = st.selectbox("Turno", ["Todos", "Manhã", "Tarde"])
+    st.caption("FILTROS GERAIS")
+    periodo = st.selectbox("Turno de Trabalho", ["Todos", "Manhã", "Tarde"])
     equipe = st.multiselect("Vistoriadores", df['vistoriador'].unique(), default=df['vistoriador'].unique())
 
 if equipe:
     df = df[df['vistoriador'].isin(equipe)]
 
-# --- 5. DASHBOARD OPERACIONAL ---
+# --- 5. DASHBOARD LAYOUT (GRID) ---
 
-# Definição do Grid: Topo (KPIs + Heatmap) e Baixo (Detalhes + Ranking)
-# Isso melhora a harmonia visual em vez de colunas verticais rígidas
+# LINHA 1: RESUMO OPERACIONAL (3 COLUNAS)
+# Aqui juntamos o TMA, o Status e as Etapas. Ao colocar lado a lado, removemos espaços vazios.
+c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
 
-# --- SEÇÃO SUPERIOR: TMA (Esq) e HEATMAP (Dir) ---
-col_top_left, col_top_right = st.columns([1, 2], gap="medium")
-
-with col_top_left:
-    # KPI PRINCIPAL
+with c1:
+    # 1. KPI TMA (DESTAQUE)
     avg_total = df['tempo_total'].mean()
     st.markdown(f"""
         <div class="css-highlight-card">
-            <h3 style="font-size:14px; opacity:0.9; margin-bottom:5px; font-weight:400;">Tempo Médio Total (TMA)</h3>
-            <h1 style="font-size:38px; margin:0; font-weight:700;">{avg_total:.1f} min</h1>
-            <div style="margin-top:10px; font-size:12px; opacity:0.8;">
-                Meta Global: 25.0 min
+            <div style="font-size:14px; opacity:0.9; margin-bottom:5px;">Tempo Médio Total (TMA)</div>
+            <div style="font-size:36px; font-weight:700; margin-bottom:10px;">{avg_total:.1f} min</div>
+            <div style="background-color:rgba(255,255,255,0.2); display:inline-block; padding:4px 10px; border-radius:10px; font-size:12px;">
+                Meta: 25.0 min (⚠ +{avg_total-25:.1f})
             </div>
         </div>
     """, unsafe_allow_html=True)
-    
-    # STATUS (ROSCA) - Agora logo abaixo do KPI para compor a coluna "Resumo"
+
+with c2:
+    # 2. STATUS (PIE CHART) - Legibilidade aumentada
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.markdown('<h5 style="margin-bottom:0px; font-size:14px;">Status dos Laudos</h5>', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">Status dos Laudos</div>', unsafe_allow_html=True)
     
     df_status = df['status'].value_counts().reset_index()
     df_status.columns = ['Status', 'Count']
     color_map = {'Concluído': '#17A2B8', 'Pendente': '#F1C40F', 'Refazer': '#FF5252'}
     
-    fig_pie = px.pie(df_status, names='Status', values='Count', hole=0.7, color='Status', color_discrete_map=color_map)
+    fig_pie = px.pie(df_status, names='Status', values='Count', hole=0.6, color='Status', color_discrete_map=color_map)
     fig_pie.update_layout(
-        plot_bgcolor='white', paper_bgcolor='white', margin=dict(t=10, b=0, l=0, r=0), height=140,
-        showlegend=True, legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="left", x=1.0)
+        plot_bgcolor='white', paper_bgcolor='white',
+        margin=dict(t=0, b=0, l=0, r=0),
+        height=140, # Altura controlada para alinhar
+        showlegend=True,
+        legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="right", x=1.1)
     )
     st.plotly_chart(fig_pie, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-with col_top_right:
-    # HEATMAP (Ocupa a maior parte visual)
+with c3:
+    # 3. GARGALOS (BARRA HORIZONTAL) - Agora tem espaço lateral
     st.markdown('<div class="css-card">', unsafe_allow_html=True)
-    st.markdown('<div style="display:flex; justify-content:space-between; align-items:center;">', unsafe_allow_html=True)
-    st.markdown('<h4 style="margin:0;">Ocupação dos Boxes</h4>', unsafe_allow_html=True)
-    st.markdown('<span style="font-size:12px; color:#A3AED0;">Intensidade Semanal</span>', unsafe_allow_html=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-    
-    heatmap_data = df.groupby(['dia_semana_curto', 'hora']).size().reset_index(name='qtd')
-    dias_ordem = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
-    
-    fig_heat = px.density_heatmap(
-        heatmap_data, x='hora', y='dia_semana_curto', z='qtd', 
-        category_orders={"dia_semana_curto": dias_ordem},
-        color_continuous_scale=['#F4F7FE', '#17A2B8', '#004D40']
-    )
-    fig_heat.update_layout(
-        plot_bgcolor='white', paper_bgcolor='white', margin=dict(t=10, b=0, l=0, r=0),
-        xaxis=dict(title="Horário", dtick=1, tickfont=dict(color='#A3AED0')),
-        yaxis=dict(title=None, tickfont=dict(color='#2B3674', size=12)),
-        height=320, coloraxis_showscale=False
-    )
-    st.plotly_chart(fig_heat, use_container_width=True)
-    st.markdown('</div>', unsafe_allow_html=True)
-
-# --- DIVISOR SUTIL (LINHA) ---
-st.markdown('<hr class="clean-divider">', unsafe_allow_html=True)
-
-# --- SEÇÃO INFERIOR: GARGALOS (Esq) e EQUIPE (Dir) ---
-col_bot_1, col_bot_2 = st.columns([1, 2], gap="medium")
-
-with col_bot_1:
-    # GARGALOS
-    st.markdown('<div class="css-card" style="height:100%;">', unsafe_allow_html=True)
-    st.markdown('<h5 style="margin-bottom:15px;">Tempos por Etapa</h5>', unsafe_allow_html=True)
+    st.markdown('<div class="card-title">Tempos por Etapa (Médias)</div>', unsafe_allow_html=True)
     
     etapas_df = pd.DataFrame({
         'Etapa': ['Vistoria', 'Upload', 'Validação'],
@@ -221,37 +198,72 @@ with col_bot_1:
     })
     
     fig_bar = px.bar(etapas_df, x='Tempo', y='Etapa', orientation='h', text='Tempo')
-    fig_bar.update_traces(marker_color=etapas_df['Cor'], texttemplate='%{text:.1f} m', textposition='inside')
+    # Aumentei o tamanho da fonte (size=14) para ficar legível
+    fig_bar.update_traces(marker_color=etapas_df['Cor'], texttemplate='%{text:.1f} min', textposition='inside', textfont_size=14)
     fig_bar.update_layout(
-        plot_bgcolor='white', paper_bgcolor='white', margin=dict(t=0, b=0, l=0, r=0),
+        plot_bgcolor='white', paper_bgcolor='white',
+        margin=dict(t=0, b=0, l=0, r=0),
         xaxis=dict(showgrid=False, showticklabels=False, title=None),
         yaxis=dict(showgrid=False, title=None, tickfont=dict(color='#2B3674', size=12)),
-        height=180, showlegend=False
+        height=140, 
+        showlegend=False
     )
     st.plotly_chart(fig_bar, use_container_width=True)
     st.markdown('</div>', unsafe_allow_html=True)
 
-with col_bot_2:
-    # CARDS DE EQUIPE (Layout Horizontal)
-    st.markdown('<h5 style="margin-bottom:15px;">Ranking de Produtividade</h5>', unsafe_allow_html=True)
-    
-    team_stats = df.groupby('vistoriador').agg(
-        total=('id_laudo', 'count'),
-        tempo_medio=('tempo_total', 'mean')
-    ).sort_values('tempo_medio', ascending=True)
 
-    c_team = st.columns(4)
-    i = 0
-    for vistoriador, row in team_stats.iterrows():
-        if i < 4:
-            with c_team[i]:
-                cor_tempo = "#00C853" if row['tempo_medio'] < 28 else "#FF5252"
-                html_card = f"""
-                <div class="css-card" style="padding: 15px; text-align: center; border-top: 4px solid {cor_tempo};">
-                    <div style="font-weight:bold; color:#2B3674; font-size:13px; margin-bottom:5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{vistoriador}</div>
-                    <div style="font-size:20px; font-weight:800; color:{cor_tempo};">{row['tempo_medio']:.0f} <span style="font-size:10px; color:#A3AED0;">min</span></div>
-                    <div style="font-size:10px; color:#A3AED0;">{row['total']} laudos</div>
+# LINHA 2: HEATMAP (FULL WIDTH)
+st.markdown("<br>", unsafe_allow_html=True) # Espaçamento
+st.markdown('<div class="css-card">', unsafe_allow_html=True)
+st.markdown('<div class="card-title">Mapa de Calor: Ocupação dos Boxes</div>', unsafe_allow_html=True)
+st.markdown('<div class="card-subtitle" style="margin-bottom:15px;">Intensidade de vistorias por Dia e Hora (Identificação de Picos)</div>', unsafe_allow_html=True)
+
+heatmap_data = df.groupby(['dia_semana_curto', 'hora']).size().reset_index(name='qtd')
+dias_ordem = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom']
+
+fig_heat = px.density_heatmap(
+    heatmap_data, x='hora', y='dia_semana_curto', z='qtd', 
+    category_orders={"dia_semana_curto": dias_ordem},
+    color_continuous_scale=['#F4F7FE', '#17A2B8', '#004D40']
+)
+fig_heat.update_layout(
+    plot_bgcolor='white', paper_bgcolor='white',
+    margin=dict(t=0, b=0, l=0, r=0),
+    xaxis=dict(title="Horário", dtick=1, tickfont=dict(color='#A3AED0')),
+    yaxis=dict(title=None, tickfont=dict(color='#2B3674', size=12)),
+    height=300, # Altura boa para ver os detalhes
+    coloraxis_showscale=False
+)
+st.plotly_chart(fig_heat, use_container_width=True)
+st.markdown('</div>', unsafe_allow_html=True)
+
+
+# LINHA 3: EQUIPE (4 COLUNAS)
+st.markdown("<br>", unsafe_allow_html=True)
+st.markdown('<h5 style="color:#2B3674; margin-bottom:15px;">Produtividade da Equipe</h5>', unsafe_allow_html=True)
+
+team_stats = df.groupby('vistoriador').agg(
+    total=('id_laudo', 'count'),
+    tempo_medio=('tempo_total', 'mean')
+).sort_values('tempo_medio', ascending=True)
+
+cols = st.columns(4, gap="medium")
+i = 0
+for vistoriador, row in team_stats.iterrows():
+    if i < 4:
+        with cols[i]:
+            cor_tempo = "#00C853" if row['tempo_medio'] < 28 else "#FF5252"
+            
+            # Card compactado e limpo
+            html_card = f"""
+            <div class="css-card" style="padding: 20px; text-align: center; border-bottom: 4px solid {cor_tempo};">
+                <div style="font-weight:bold; color:#2B3674; font-size:14px; margin-bottom:5px;">{vistoriador}</div>
+                <div style="display:flex; justify-content:center; align-items:baseline;">
+                    <span style="font-size:26px; font-weight:800; color:{cor_tempo};">{row['tempo_medio']:.0f}</span>
+                    <span style="font-size:12px; color:#A3AED0; margin-left:5px;">min/laudo</span>
                 </div>
-                """
-                st.markdown(html_card, unsafe_allow_html=True)
-            i += 1
+                <div style="font-size:11px; color:#A3AED0; margin-top:5px;">Total: {row['total']}</div>
+            </div>
+            """
+            st.markdown(html_card, unsafe_allow_html=True)
+        i += 1
