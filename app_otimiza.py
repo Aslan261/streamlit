@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Otimiza Financeiro",
+    page_title="Financeiro",
     page_icon="💲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -204,7 +204,7 @@ with c3:
     # Config para remover a barra de ferramentas do plotly (mais limpo)
     st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
     
-    st.markdown('</div>', unsafe_allow_html=True)
+   # st.markdown('</div>', unsafe_allow_html=True)
 
 
 # LINHA 2: GRÁFICO DE BARRAS (Veículos)
@@ -259,3 +259,4 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
