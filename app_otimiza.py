@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. CSS ---
+# --- 2. CSS (ESTRUTURA DA VERSÃO 12) ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
@@ -45,13 +45,13 @@ st.markdown("""
         }
         span[data-baseweb="tag"] span {color: #17A2B8 !important;}
 
-        /* CARDS HTML (Texto) */
+        /* CARDS HTML (Texto) - Altura fixa 180px */
         .css-card {
             background-color: #FFFFFF;
             border-radius: 16px;
             padding: 24px;
             box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
-            height: 180px; /* Altura fixa para alinhar */
+            height: 180px; 
             border: 1px solid #EFF0F6;
             display: flex;
             flex-direction: column;
@@ -64,17 +64,18 @@ st.markdown("""
             padding: 24px;
             box-shadow: 0px 8px 20px rgba(23, 162, 184, 0.3);
             color: white;
-            height: 180px; /* Altura fixa para alinhar */
+            height: 180px;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
         
         /* ESTILIZAÇÃO DOS GRÁFICOS (Container Plotly) */
+        /* Isso aplica o visual de cartão ao redor do gráfico nativo */
         div[data-testid="stPlotlyChart"] {
             background-color: #FFFFFF;
             border-radius: 16px;
-            padding: 10px; /* Reduzi padding interno para dar espaço ao gráfico */
+            padding: 10px; /* Padding reduzido para dar espaço ao gráfico */
             box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
             border: 1px solid #EFF0F6;
         }
@@ -170,7 +171,7 @@ with c2:
     """, unsafe_allow_html=True)
 
 with c3:
-    # --- GRÁFICO DE PIZZA (AJUSTADO PARA NÃO CORTAR) ---
+    # --- GRÁFICO DE PIZZA (AJUSTE FINO DO OBJETO) ---
     df_status = df['status'].value_counts().reset_index()
     df_status.columns = ['Status', 'Count']
     
@@ -178,20 +179,30 @@ with c3:
                      color='Status', color_discrete_map={'Pago': '#17A2B8', 'Pendente': '#FF5252'})
     
     fig_pie.update_layout(
+        # Título dentro do gráfico (não usa HTML externo)
         title=dict(
             text="STATUS DE PAGAMENTO",
             font=dict(size=13, color="#A3AED0", family="Roboto"),
-            x=0, y=0.98 # Título bem no topo
+            x=0, y=0.96 
         ),
         plot_bgcolor='white', paper_bgcolor='white',
-        # Margens ajustadas: Topo menor (para o título), Embaixo zero
-        margin=dict(t=35, b=0, l=0, r=0), 
-        height=145, # Altura reduzida para caber DENTRO dos 180px do card (contando padding)
+        
+        # MARGENS CRÍTICAS: Ajustadas para não cortar a pizza
+        # Top 30 (título), Bottom 10 (perto borda), Left/Right 10
+        margin=dict(t=30, b=10, l=10, r=10),
+        
+        height=180, # Altura exata para alinhar com os vizinhos
+        
         showlegend=True,
-        # Legenda compacta na direita
-        legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="right", x=1)
+        # Legenda posicionada para não empurrar o gráfico
+        legend=dict(
+            orientation="v", 
+            yanchor="middle", y=0.5, 
+            xanchor="right", x=1,
+            font=dict(size=10) # Fonte menor para caber
+        )
     )
-    # A classe CSS stPlotlyChart vai criar a borda branca ao redor deste gráfico
+    # A classe CSS stPlotlyChart cuida da borda branca/arredondada
     st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
 
