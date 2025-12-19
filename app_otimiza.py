@@ -182,7 +182,7 @@ with c2:
 
 with c3:
     # KPI 3: STATUS (PIE CHART CORRIGIDO)
-    st.markdown('<div class="css-card" style="padding:15px 20px;">', unsafe_allow_html=True)
+    #st.markdown('<div class="css-card" style="padding:15px 20px;">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">Status de Pagamento</div>', unsafe_allow_html=True)
     
     df_status = df['status'].value_counts().reset_index()
@@ -208,7 +208,7 @@ with c3:
 
 
 # LINHA 2: GRÁFICO DE BARRAS (Veículos)
-st.markdown("<br>", unsafe_allow_html=True)
+#st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('<div class="css-card-large">', unsafe_allow_html=True)
 st.markdown('<div class="card-title" style="margin-bottom:20px;">Quantidade de Vistorias por Tipo de Veículo</div>', unsafe_allow_html=True)
 
@@ -259,4 +259,5 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
