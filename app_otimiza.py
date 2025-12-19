@@ -208,8 +208,8 @@ with c3:
 
 
 # LINHA 2: GRÁFICO DE BARRAS (Veículos)
-#st.markdown("<br>", unsafe_allow_html=True)
-st.markdown('<div class="css-card-large">', unsafe_allow_html=True)
+st.markdown("<br>", unsafe_allow_html=True)
+#st.markdown('<div class="css-card-large">', unsafe_allow_html=True)
 st.markdown('<div class="card-title" style="margin-bottom:20px;">Quantidade de Vistorias por Tipo de Veículo</div>', unsafe_allow_html=True)
 
 df_veiculo = df.groupby('tipo_veiculo')['id_laudo'].count().reset_index().sort_values('id_laudo', ascending=False)
@@ -259,5 +259,6 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
 
