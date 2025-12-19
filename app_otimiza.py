@@ -204,11 +204,12 @@ with c3:
     # Config para remover a barra de ferramentas do plotly (mais limpo)
     st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
     
-    st.markdown('</div>', unsafe_allow_html=True)
+    #st.markdown('</div>', unsafe_allow_html=True)
 
 
 # LINHA 2: GRÁFICO DE BARRAS (Veículos)
-#st.markdown("<br>", unsafe_allow_html=True)
+
+st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('<div class="css-card-large">', unsafe_allow_html=True)
 st.markdown('<div class="card-title" style="margin-bottom:20px;">Quantidade de Vistorias por Tipo de Veículo</div>', unsafe_allow_html=True)
 
@@ -259,6 +260,7 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
 
 
