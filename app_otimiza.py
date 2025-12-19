@@ -45,41 +45,41 @@ st.markdown("""
         }
         span[data-baseweb="tag"] span {color: #17A2B8 !important;}
 
-        /* CARDS */
+        /* CARDS HTML (Para Receita e Ticket) */
         .css-card {
-            background-color: #FFFFFF;
-            border-radius: 16px;
-            padding: 20px;
-            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
-            height: 160px; /* Altura fixa para linha superior */
-            border: 1px solid #EFF0F6;
-            display: flex;
-            flex-direction: column;
-            justify-content: center; /* Centraliza conteúdo verticalmente */
-            overflow: hidden; /* Garante que nada saia do card */
-        }
-        
-        .css-card-large {
             background-color: #FFFFFF;
             border-radius: 16px;
             padding: 24px;
             box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
+            height: 180px; /* Altura fixa igualada aos gráficos */
             border: 1px solid #EFF0F6;
-            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .css-highlight-card {
             background: linear-gradient(135deg, #17A2B8 0%, #008080 100%);
             border-radius: 16px;
-            padding: 20px;
+            padding: 24px;
             box-shadow: 0px 8px 20px rgba(23, 162, 184, 0.3);
             color: white;
-            height: 160px;
+            height: 180px; /* Altura fixa igualada */
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
         
+        /* ESTILIZAÇÃO MÁGICA DOS GRÁFICOS (Para parecerem Cards) 
+           Isso aplica o estilo de cartão branco diretamente ao container do gráfico */
+        div[data-testid="stPlotlyChart"] {
+            background-color: #FFFFFF;
+            border-radius: 16px;
+            padding: 15px;
+            box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
+            border: 1px solid #EFF0F6;
+        }
+
         .card-title {
             font-size: 13px;
             font-weight: 600;
@@ -145,7 +145,7 @@ if equipe:
 
 # --- 5. DASHBOARD LAYOUT ---
 
-# LINHA 1
+# LINHA 1: 3 CARDS ALINHADOS (Altura 180px)
 c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
 
 with c1:
@@ -171,65 +171,57 @@ with c2:
     """, unsafe_allow_html=True)
 
 with c3:
-    # --- GRÁFICO DE PIZZA EMBUTIDO (CORREÇÃO DE CONTAINER) ---
+    # KPI 3: STATUS (NATIVO - Resolvendo o "Branco")
     df_status = df['status'].value_counts().reset_index()
     df_status.columns = ['Status', 'Count']
     
-    # Gerando o gráfico
+    # Criamos o título DENTRO do gráfico para garantir que fiquem juntos
     fig_pie = px.pie(df_status, names='Status', values='Count', 
                      color='Status', color_discrete_map={'Pago': '#17A2B8', 'Pendente': '#FF5252'})
     
     fig_pie.update_layout(
-        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
-        margin=dict(t=0, b=0, l=0, r=0), 
-        height=100, # Altura pequena para caber no card
-        showlegend=True, 
+        title=dict(
+            text="STATUS DE PAGAMENTO",
+            font=dict(size=13, color="#A3AED0", family="Roboto"),
+            x=0, # Alinhado a esquerda
+            y=0.95
+        ),
+        plot_bgcolor='white', paper_bgcolor='white',
+        margin=dict(t=40, b=10, l=10, r=10), # Margem Top para caber o título
+        height=180, # Altura exata para alinhar com os cards HTML
+        showlegend=True,
         legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="right", x=1)
     )
-    
-    # Convertendo para HTML
-    pie_html = fig_pie.to_html(full_html=False, include_plotlyjs='cdn', config={'displayModeBar': False})
-    
-    # Inserindo o HTML do gráfico DENTRO da div do card
-    st.markdown(f"""
-        <div class="css-card">
-            <div class="card-title" style="margin-bottom:0px;">Status de Pagamento</div>
-            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
-                {pie_html}
-            </div>
-        </div>
-    """, unsafe_allow_html=True)
+    # O CSS global div[data-testid="stPlotlyChart"] vai dar a borda arredondada e sombra
+    st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
 
 
-# LINHA 2: GRÁFICO DE BARRAS (CORREÇÃO DE CONTAINER)
+# LINHA 2: GRÁFICO DE BARRAS (NATIVO - Resolvendo o Divisor)
 st.markdown("<br>", unsafe_allow_html=True)
 
-# 1. Preparar o Gráfico
 df_veiculo = df.groupby('tipo_veiculo')['id_laudo'].count().reset_index().sort_values('id_laudo', ascending=False)
 fig_bar = px.bar(
     df_veiculo, x='tipo_veiculo', y='id_laudo', color='tipo_veiculo',
     color_discrete_sequence=['#17A2B8', '#20B2AA', '#008080', '#5F9EA0']
 )
+
 fig_bar.update_layout(
+    title=dict(
+        text="QUANTIDADE DE VISTORIAS POR TIPO DE VEÍCULO",
+        font=dict(size=14, color="#A3AED0", family="Roboto"),
+        x=0,
+        y=0.95
+    ),
     plot_bgcolor='white', paper_bgcolor='white',
-    margin=dict(t=10, b=0, l=0, r=0),
+    margin=dict(t=50, b=20, l=20, r=20), # Margem Top para o título
     xaxis=dict(title=None, showgrid=False, tickfont=dict(color='#A3AED0')),
     yaxis=dict(title=None, showgrid=True, gridcolor='#F4F7FE', tickfont=dict(color='#A3AED0')),
-    height=250,
+    height=320,
     showlegend=False
 )
 fig_bar.update_traces(marker_line_width=0, texttemplate='%{y}', textposition='outside')
-
-# 2. Converter para HTML
-bar_html = fig_bar.to_html(full_html=False, include_plotlyjs='cdn', config={'displayModeBar': False})
-
-# 3. Inserir DENTRO do container branco (Solução Definitiva)
-st.markdown(f"""
-    <div class="css-card-large">
-        <div class="card-title" style="margin-bottom:15px;">Quantidade de Vistorias por Tipo de Veículo</div>
-        {bar_html}
-    </div>
-""", unsafe_allow_html=True)
+# O CSS global aplica a borda arredondada ao container deste gráfico também
+st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
 
 # LINHA 3: RANKING
