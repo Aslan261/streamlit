@@ -181,28 +181,29 @@ with c2:
     """, unsafe_allow_html=True)
 
 with c3:
-    # KPI 3: STATUS (BRANCO COM GRÁFICO ALINHADO)
-    # Abre o card HTML
-    st.markdown('<div class="css-card" style="padding:15px 24px;">', unsafe_allow_html=True)
+    # KPI 3: STATUS (PIE CHART CORRIGIDO)
+    st.markdown('<div class="css-card" style="padding:15px 20px;">', unsafe_allow_html=True)
     st.markdown('<div class="card-title">Status de Pagamento</div>', unsafe_allow_html=True)
     
-    # Gráfico ajustado para caber sem margens
     df_status = df['status'].value_counts().reset_index()
     df_status.columns = ['Status', 'Count']
     
-    fig_pie = px.pie(df_status, names='Status', values='Count', hole=0.7, 
+    # GRÁFICO DE PIZZA (Sem hole)
+    fig_pie = px.pie(df_status, names='Status', values='Count', 
                      color='Status', color_discrete_map={'Pago': '#17A2B8', 'Pendente': '#FF5252'})
     
     fig_pie.update_layout(
         plot_bgcolor='white', paper_bgcolor='white',
-        margin=dict(t=0, b=0, l=0, r=0), 
-        height=90, # Altura reduzida para caber perfeitamente no card de 160px
+        # Margens ajustadas para caber a legenda embaixo
+        margin=dict(t=5, b=15, l=5, r=5), 
+        height=115, # Altura ajustada para o card de 160px
         showlegend=True, 
-        legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="right", x=1)
+        # Legenda horizontal na parte inferior para dar espaço ao gráfico
+        legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5, font=dict(size=10))
     )
+    # Config para remover a barra de ferramentas do plotly (mais limpo)
     st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
     
-    # Fecha o card HTML
     st.markdown('</div>', unsafe_allow_html=True)
 
 
