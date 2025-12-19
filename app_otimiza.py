@@ -6,13 +6,13 @@ from datetime import datetime, timedelta
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Financeiro",
+    page_title="Otimiza Financeiro",
     page_icon="💲",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 2. CSS AJUSTADO (ALINHAMENTO PERFEITO) ---
+# --- 2. CSS ---
 st.markdown("""
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap');
@@ -23,7 +23,6 @@ st.markdown("""
             font-family: 'Roboto', sans-serif;
         }
         
-        /* CORREÇÃO BARRA PRETA SUPERIOR */
         .block-container {
             padding-top: 3.5rem; 
             padding-bottom: 3rem;
@@ -40,55 +39,49 @@ st.markdown("""
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {color: #2B3674 !important;}
         [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {color: #A3AED0 !important;}
 
-        /* TAGS */
         span[data-baseweb="tag"] {
             background-color: rgba(23, 162, 184, 0.15) !important;
             border: 1px solid rgba(23, 162, 184, 0.5);
         }
-        span[data-baseweb="tag"] span {
-            color: #17A2B8 !important;
-        }
+        span[data-baseweb="tag"] span {color: #17A2B8 !important;}
 
-        /* CARDS UNIFICADOS (Tamanho igual) */
+        /* CARDS */
         .css-card {
             background-color: #FFFFFF;
             border-radius: 16px;
-            padding: 24px;
+            padding: 20px;
             box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
-            margin-bottom: 0px; 
-            height: 160px; /* Altura fixa para alinhar a primeira linha */
+            height: 160px; /* Altura fixa para linha superior */
             border: 1px solid #EFF0F6;
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
+            justify-content: center; /* Centraliza conteúdo verticalmente */
+            overflow: hidden; /* Garante que nada saia do card */
         }
         
-        /* Card Grande (Gráfico de Barras) - Altura Automática */
         .css-card-large {
             background-color: #FFFFFF;
             border-radius: 16px;
             padding: 24px;
             box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
             border: 1px solid #EFF0F6;
-            height: 100%;
+            margin-bottom: 20px;
         }
 
-        /* CARD DESTAQUE (Teal) */
         .css-highlight-card {
             background: linear-gradient(135deg, #17A2B8 0%, #008080 100%);
             border-radius: 16px;
-            padding: 24px;
+            padding: 20px;
             box-shadow: 0px 8px 20px rgba(23, 162, 184, 0.3);
             color: white;
-            height: 160px; /* Mesma altura dos vizinhos */
+            height: 160px;
             display: flex;
             flex-direction: column;
             justify-content: center;
         }
         
-        /* Títulos */
         .card-title {
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 600;
             color: #A3AED0;
             margin-bottom: 5px;
@@ -97,12 +90,11 @@ st.markdown("""
         }
         
         .card-value {
-            font-size: 32px;
+            font-size: 30px;
             font-weight: 700;
             color: #2B3674;
         }
 
-        /* TIPOGRAFIA */
         h1, h2, h3, h4, h5, h6, p, span, div {color: #2B3674;}
         .css-highlight-card h1, .css-highlight-card h3, .css-highlight-card div, .css-highlight-card span {color: #FFFFFF !important;}
 
@@ -153,16 +145,15 @@ if equipe:
 
 # --- 5. DASHBOARD LAYOUT ---
 
-# LINHA 1: 3 CARDS ALINHADOS (Receita | Ticket | Status)
+# LINHA 1
 c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
 
 with c1:
-    # KPI 1: RECEITA TOTAL (TEAL)
     receita_total = df['valor'].sum()
     st.markdown(f"""
         <div class="css-highlight-card">
-            <div style="font-size:13px; opacity:0.9; margin-bottom:5px;">RECEITA TOTAL</div>
-            <div style="font-size:30px; font-weight:700; margin-bottom:5px;">R$ {receita_total:,.2f}</div>
+            <div style="font-size:12px; opacity:0.9; margin-bottom:5px;">RECEITA TOTAL</div>
+            <div style="font-size:28px; font-weight:700; margin-bottom:5px;">R$ {receita_total:,.2f}</div>
             <div style="font-size:11px; opacity:0.8;">
                 <span style="background-color:rgba(255,255,255,0.2); padding:3px 8px; border-radius:8px;">🚀 +15% vs mês anterior</span>
             </div>
@@ -170,73 +161,78 @@ with c1:
     """, unsafe_allow_html=True)
 
 with c2:
-    # KPI 2: TICKET MÉDIO (BRANCO)
     ticket_medio = df['valor'].mean()
     st.markdown(f"""
         <div class="css-card">
             <div class="card-title">Ticket Médio</div>
             <div class="card-value">R$ {ticket_medio:.2f}</div>
-            <div style="font-size:11px; color:#A3AED0;">Média por vistoria</div>
+            <div style="font-size:11px; color:#A3AED0; margin-top:5px;">Média por vistoria</div>
         </div>
     """, unsafe_allow_html=True)
 
 with c3:
-    # KPI 3: STATUS (PIE CHART CORRIGIDO)
-    #st.markdown('<div class="css-card" style="padding:15px 20px;">', unsafe_allow_html=True)
-    st.markdown('<div class="card-title">Status de Pagamento</div>', unsafe_allow_html=True)
-    
+    # --- GRÁFICO DE PIZZA EMBUTIDO (CORREÇÃO DE CONTAINER) ---
     df_status = df['status'].value_counts().reset_index()
     df_status.columns = ['Status', 'Count']
     
-    # GRÁFICO DE PIZZA (Sem hole)
+    # Gerando o gráfico
     fig_pie = px.pie(df_status, names='Status', values='Count', 
                      color='Status', color_discrete_map={'Pago': '#17A2B8', 'Pendente': '#FF5252'})
     
     fig_pie.update_layout(
-        plot_bgcolor='white', paper_bgcolor='white',
-        # Margens ajustadas para caber a legenda embaixo
-        margin=dict(t=5, b=15, l=5, r=5), 
-        height=115, # Altura ajustada para o card de 160px
+        plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)',
+        margin=dict(t=0, b=0, l=0, r=0), 
+        height=100, # Altura pequena para caber no card
         showlegend=True, 
-        # Legenda horizontal na parte inferior para dar espaço ao gráfico
-        legend=dict(orientation="h", yanchor="bottom", y=-0.25, xanchor="center", x=0.5, font=dict(size=10))
+        legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="right", x=1)
     )
-    # Config para remover a barra de ferramentas do plotly (mais limpo)
-    st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
     
-    #st.markdown('</div>', unsafe_allow_html=True)
+    # Convertendo para HTML
+    pie_html = fig_pie.to_html(full_html=False, include_plotlyjs='cdn', config={'displayModeBar': False})
+    
+    # Inserindo o HTML do gráfico DENTRO da div do card
+    st.markdown(f"""
+        <div class="css-card">
+            <div class="card-title" style="margin-bottom:0px;">Status de Pagamento</div>
+            <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center;">
+                {pie_html}
+            </div>
+        </div>
+    """, unsafe_allow_html=True)
 
 
-# LINHA 2: GRÁFICO DE BARRAS (Veículos)
-
+# LINHA 2: GRÁFICO DE BARRAS (CORREÇÃO DE CONTAINER)
 st.markdown("<br>", unsafe_allow_html=True)
-st.markdown('<div class="css-card-large">', unsafe_allow_html=True)
-st.markdown('<div class="card-title" style="margin-bottom:20px;">Quantidade de Vistorias por Tipo de Veículo</div>', unsafe_allow_html=True)
 
+# 1. Preparar o Gráfico
 df_veiculo = df.groupby('tipo_veiculo')['id_laudo'].count().reset_index().sort_values('id_laudo', ascending=False)
-
 fig_bar = px.bar(
-    df_veiculo, 
-    x='tipo_veiculo', 
-    y='id_laudo', 
-    color='tipo_veiculo',
+    df_veiculo, x='tipo_veiculo', y='id_laudo', color='tipo_veiculo',
     color_discrete_sequence=['#17A2B8', '#20B2AA', '#008080', '#5F9EA0']
 )
-
 fig_bar.update_layout(
     plot_bgcolor='white', paper_bgcolor='white',
-    margin=dict(t=0, b=0, l=0, r=0),
+    margin=dict(t=10, b=0, l=0, r=0),
     xaxis=dict(title=None, showgrid=False, tickfont=dict(color='#A3AED0')),
     yaxis=dict(title=None, showgrid=True, gridcolor='#F4F7FE', tickfont=dict(color='#A3AED0')),
-    height=280,
+    height=250,
     showlegend=False
 )
 fig_bar.update_traces(marker_line_width=0, texttemplate='%{y}', textposition='outside')
-st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
-st.markdown('</div>', unsafe_allow_html=True)
+
+# 2. Converter para HTML
+bar_html = fig_bar.to_html(full_html=False, include_plotlyjs='cdn', config={'displayModeBar': False})
+
+# 3. Inserir DENTRO do container branco (Solução Definitiva)
+st.markdown(f"""
+    <div class="css-card-large">
+        <div class="card-title" style="margin-bottom:15px;">Quantidade de Vistorias por Tipo de Veículo</div>
+        {bar_html}
+    </div>
+""", unsafe_allow_html=True)
 
 
-# LINHA 3: RANKING FINANCEIRO
+# LINHA 3: RANKING
 st.markdown("<br>", unsafe_allow_html=True)
 st.markdown('<h5 style="color:#2B3674; margin-bottom:15px;">Receita Gerada por Vistoriador</h5>', unsafe_allow_html=True)
 
@@ -252,7 +248,7 @@ for vistoriador, row in team_finance.iterrows():
         with cols[i]:
             border_color = "#17A2B8" if i == 0 else "#E0E0E0" 
             html_card = f"""
-            <div class="css-card-large" style="padding: 20px; text-align: center; border-bottom: 4px solid {border_color}; border-radius: 16px;">
+            <div class="css-card" style="height:auto; padding: 20px; text-align: center; border-bottom: 4px solid {border_color};">
                 <div style="font-weight:600; color:#2B3674; font-size:14px; margin-bottom:8px;">{vistoriador}</div>
                 <div style="font-size:24px; font-weight:800; color:#17A2B8;">R$ {row['total_receita']:,.0f}</div>
                 <div style="font-size:11px; color:#A3AED0; margin-top:5px;">{row['qtd']} vistorias</div>
@@ -260,8 +256,3 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
-
-
-
-
-
