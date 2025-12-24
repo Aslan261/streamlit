@@ -21,7 +21,8 @@ CORES = {
     "grey_light": "#A3AED0",
     "grey_text": "#64748B", # Cinza mais escuro para leitura (Eixos)
     "bg_light": "#F4F7FE",
-    "white": "#FFFFFF"
+    "white": "#FFFFFF",
+    "black": "#000000"
 }
 
 st.markdown(f"""
@@ -273,5 +274,6 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
 
