@@ -21,7 +21,7 @@ CORES = {
     "grey_text": "#64748B",
     "bg_light": "#F4F7FE",
     "white": "#FFFFFF",
-    "black": "#000000"
+    "red": "#FF5252"
 }
 
 st.markdown(f"""
@@ -41,38 +41,31 @@ st.markdown(f"""
         #MainMenu {{visibility: hidden;}}
         footer {{visibility: hidden;}}
 
-        /* SIDEBAR - CORREÇÃO DEFINITIVA DO FUNDO PRETO */
+        /* SIDEBAR */
         [data-testid="stSidebar"] {{
             background-color: {CORES['white']};
             border-right: 1px solid #E0E0E0;
         }}
-        
-        /* Forçar textos da sidebar a serem escuros */
         [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
             color: {CORES['navy']} !important;
         }}
         
-        /* CORREÇÃO DOS INPUTS (Selectbox e Multiselect) */
-        /* Garante que o fundo da caixa de seleção seja branco e o texto escuro */
+        /* CORREÇÃO DOS INPUTS */
         .stSelectbox div[data-baseweb="select"] > div,
         .stMultiSelect div[data-baseweb="select"] > div {{
             background-color: {CORES['white']} !important;
             color: {CORES['navy']} !important;
             border-color: #E0E0E0 !important;
         }}
-        
-        /* Cor do texto dentro do input */
         .stSelectbox div[data-baseweb="select"] span,
         .stMultiSelect div[data-baseweb="select"] span {{
             color: {CORES['navy']} !important;
         }}
-        
-        /* Cor do ícone da seta (Dropdown) */
         .stSelectbox svg, .stMultiSelect svg {{
             fill: {CORES['grey_light']} !important;
         }}
 
-        /* TAGS DO MULTISELECT (Quando selecionado) */
+        /* TAGS DO MULTISELECT */
         span[data-baseweb="tag"] {{
             background-color: rgba(23, 162, 184, 0.15) !important;
             border: 1px solid rgba(23, 162, 184, 0.5);
@@ -81,7 +74,7 @@ st.markdown(f"""
             color: {CORES['teal']} !important;
         }}
 
-        /* --- RESTO DO CSS (CARDS E GRÁFICOS) --- */
+        /* CARDS HTML (Texto) - Altura fixa 180px */
         .css-card {{
             background-color: {CORES['white']};
             border-radius: 16px;
@@ -106,12 +99,15 @@ st.markdown(f"""
             justify-content: center;
         }}
         
+        /* ESTILIZAÇÃO DOS GRÁFICOS (Container Plotly) */
+        /* Isso garante que o card CSS se adapte ao conteúdo sem scroll */
         div[data-testid="stPlotlyChart"] {{
             background-color: {CORES['white']};
             border-radius: 16px;
             padding: 15px;
             box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
             border: 1px solid #EFF0F6;
+            overflow: hidden; /* Evita scroll interno indesejado */
         }}
 
         .card-title {{
@@ -162,29 +158,31 @@ def load_data():
 
 df = load_data()
 
-# --- 4. FUNÇÃO AUXILIAR DE LAYOUT DE GRÁFICO (FUNCIONALIDADE) ---
-# Esta função aplica o padrão visual a todos os gráficos automaticamente
-def aplicar_estilo_padrao(fig, titulo):
+# --- 4. FUNÇÃO AUXILIAR DE LAYOUT DE GRÁFICO ---
+def aplicar_estilo_padrao(fig, titulo, height=None):
     fig.update_layout(
         title=dict(
-            text=titulo.upper(), # Padroniza tudo em maiúsculo igual CSS
-            font=dict(size=13, color=CORES['grey_light'], family="Roboto"), # Mesma fonte/cor do CSS .card-title
+            text=titulo.upper(),
+            font=dict(size=13, color=CORES['grey_light'], family="Roboto"),
             x=0, 
-            y=0.96
+            y=0.98 if height and height < 200 else 0.96 # Ajuste fino para gráficos pequenos
         ),
         plot_bgcolor='white',
         paper_bgcolor='white',
-        font=dict(family="Roboto"), # Fonte global do gráfico
-        margin=dict(t=40, b=20, l=10, r=10), # Margens padronizadas
+        font=dict(family="Roboto"),
+        # Margens otimizadas para evitar scroll e cortes
+        margin=dict(t=35, b=10, l=10, r=10),
     )
-    # Padronização de Eixos (Melhoria de Contraste)
+    if height:
+        fig.update_layout(height=height)
+        
     fig.update_xaxes(
         showgrid=False, 
-        tickfont=dict(size=12, color=CORES['grey_text']) # Texto maior e mais escuro
+        tickfont=dict(size=12, color=CORES['grey_text'])
     )
     fig.update_yaxes(
         showgrid=True, 
-        gridcolor='#F0F2F6', # Grade sutil
+        gridcolor='#F0F2F6', 
         tickfont=dict(size=12, color=CORES['grey_text'])
     )
     return fig
@@ -233,49 +231,68 @@ with c2:
     """, unsafe_allow_html=True)
 
 with c3:
-    # --- GRÁFICO DE PIZZA (Padronizado) ---
+    # --- GRÁFICO DE BARRAS HORIZONTAL (STATUS) ---
+    # Substituindo a Pizza conforme solicitado
     df_status = df['status'].value_counts().reset_index()
     df_status.columns = ['Status', 'Count']
     
-    fig_pie = px.pie(df_status, names='Status', values='Count', 
-                     color='Status', color_discrete_map={'Pago': CORES['teal'], 'Pendente': '#FF5252'})
-    
-    # Aplicar função de estilo padrão
-    fig_pie = aplicar_estilo_padrao(fig_pie, "Status de Pagamento")
-    
-    # Ajustes específicos para Pizza (Legenda e Altura)
-    fig_pie.update_layout(
-        height=180, 
-        legend=dict(
-            orientation="v", 
-            yanchor="middle", y=0.5, 
-            xanchor="right", x=1,
-            font=dict(size=11, color=CORES['grey_text']) # Fonte da legenda mais legível
-        )
+    # Criando gráfico de barras horizontal simples e limpo
+    fig_status = px.bar(
+        df_status, 
+        x='Count', 
+        y='Status', 
+        orientation='h',
+        color='Status', 
+        color_discrete_map={'Pago': CORES['teal'], 'Pendente': CORES['red']},
+        text='Count' # Mostra o valor dentro da barra
     )
-    st.plotly_chart(fig_pie, use_container_width=True, config={'displayModeBar': False})
+    
+    # Aplicar padronização com altura fixa de 180px para alinhar com os cards
+    fig_status = aplicar_estilo_padrao(fig_status, "Status de Pagamento", height=180)
+    
+    # Ajustes específicos para limpar este gráfico pequeno
+    fig_status.update_layout(
+        xaxis=dict(showgrid=False, showticklabels=False, title=None), # Remove eixo X
+        yaxis=dict(showgrid=False, showline=False, title=None, tickfont=dict(size=12, color=CORES['grey_text'])), # Limpa eixo Y
+        showlegend=False,
+        margin=dict(t=35, b=0, l=0, r=10) # Margem inferior zero para aproveitar espaço
+    )
+    fig_status.update_traces(textposition='inside', marker_line_width=0)
+    
+    st.plotly_chart(fig_status, use_container_width=True, config={'displayModeBar': False})
 
 
-# LINHA 2: GRÁFICO DE BARRAS (Padronizado)
+# LINHA 2: GRÁFICO DE BARRAS CENTRAL (Padronizado e Sem Scroll)
 st.markdown("<br>", unsafe_allow_html=True)
 
 df_veiculo = df.groupby('tipo_veiculo')['id_laudo'].count().reset_index().sort_values('id_laudo', ascending=False)
 fig_bar = px.bar(
-    df_veiculo, x='tipo_veiculo', y='id_laudo', color='tipo_veiculo',
+    df_veiculo, 
+    x='tipo_veiculo', 
+    y='id_laudo', 
+    color='tipo_veiculo',
     color_discrete_sequence=[CORES['teal'], '#20B2AA', '#008080', '#5F9EA0']
 )
 
-# Aplicar função de estilo padrão
-fig_bar = aplicar_estilo_padrao(fig_bar, "Quantidade de Vistorias por Tipo de Veículo")
+# Aplicar padronização
+fig_bar = aplicar_estilo_padrao(fig_bar, "Quantidade de Vistorias por Tipo de Veículo", height=320)
 
-# Ajustes específicos para Barras
+# Ajustes Finais para evitar scroll e melhorar leitura
 fig_bar.update_layout(
-    height=320,
-    xaxis=dict(title=None), # Remove título X para limpar
-    yaxis=dict(title=None), # Remove título Y
-    showlegend=False
+    xaxis=dict(title=None, tickfont=dict(color=CORES['grey_text'], size=12)), 
+    yaxis=dict(title=None, showgrid=True, gridcolor='#F0F2F6'),
+    showlegend=False,
+    # Margem inferior otimizada (b=0) para o gráfico 'sentar' no fundo do card
+    margin=dict(t=40, b=0, l=10, r=10)
 )
-fig_bar.update_traces(marker_line_width=0, texttemplate='%{y}', textposition='outside')
+fig_bar.update_traces(
+    marker_line_width=0, 
+    texttemplate='%{y}', 
+    textposition='outside',
+    # Cliponaxis garante que o texto outside não seja cortado se for muito alto
+    cliponaxis=False 
+)
+
 st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
 
@@ -303,8 +320,3 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
-
-
-
-
-
