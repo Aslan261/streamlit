@@ -184,7 +184,7 @@ with c1:
     receita_total = df['valor'].sum()
     st.markdown(f"""
         <div class="css-highlight-card">
-            <div style="font-size:12px; opacity:0.9; margin-bottom:5px;">RECEITA TOTAL</div>
+            <div style="font-size:12px; opacity:0.9; font-family: 'Roboto', sans-serif; margin-bottom:5px;">RECEITA TOTAL</div>
             <div style="font-size:28px; font-weight:700; margin-bottom:5px;">R$ {receita_total:,.2f}</div>
             <div style="font-size:11px; opacity:0.8;">
                 <span style="background-color:rgba(255,255,255,0.2); padding:3px 8px; border-radius:8px;">🚀 +15% vs mês anterior</span>
@@ -273,3 +273,4 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
