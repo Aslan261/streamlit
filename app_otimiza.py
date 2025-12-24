@@ -64,7 +64,7 @@ st.markdown(f"""
         }}
 
         .css-highlight-card {{
-            background: linear-gradient(135deg, {CORES['teal']} 0%, {CORES['teal_dark']} 100%);
+            background: linear-gradient(135deg, {CORES['teal']} 0%, {CORES['navy']} 100%);
             border-radius: 16px;
             padding: 20px;
             box-shadow: 0px 8px 20px rgba(23, 162, 184, 0.3);
@@ -274,6 +274,7 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
 
 
