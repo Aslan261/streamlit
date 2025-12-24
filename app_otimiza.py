@@ -46,8 +46,8 @@ st.markdown(f"""
             background-color: {CORES['white']};
             border-right: 1px solid #E0E0E0;
         }}
-        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {{color: {CORES['navy']} !important;}}
-        [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {{color: {CORES['grey_light']} !important;}}
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {{color: {CORES['white']} !important;}}
+        [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {{color: {CORES['black']} !important;}}
 
         /* CARDS HTML (Texto) */
         .css-card {{
@@ -273,4 +273,5 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
