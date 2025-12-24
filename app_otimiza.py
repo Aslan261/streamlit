@@ -13,13 +13,12 @@ st.set_page_config(
 )
 
 # --- 2. CONFIGURAÇÃO DE ESTILO E CORES (PADRONIZAÇÃO) ---
-# Definindo variáveis para garantir consistência em todo o código
 CORES = {
     "teal": "#17A2B8",
     "teal_dark": "#008080",
     "navy": "#2B3674",
     "grey_light": "#A3AED0",
-    "grey_text": "#64748B", # Cinza mais escuro para leitura (Eixos)
+    "grey_text": "#64748B",
     "bg_light": "#F4F7FE",
     "white": "#FFFFFF",
     "black": "#000000"
@@ -42,15 +41,47 @@ st.markdown(f"""
         #MainMenu {{visibility: hidden;}}
         footer {{visibility: hidden;}}
 
-        /* SIDEBAR */
+        /* SIDEBAR - CORREÇÃO DEFINITIVA DO FUNDO PRETO */
         [data-testid="stSidebar"] {{
             background-color: {CORES['white']};
             border-right: 1px solid #E0E0E0;
         }}
-        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3 {{color: {CORES['white']} !important;}}
-        [data-testid="stSidebar"] p, [data-testid="stSidebar"] span, [data-testid="stSidebar"] label {{color: {CORES['black']} !important;}}
+        
+        /* Forçar textos da sidebar a serem escuros */
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
+            color: {CORES['navy']} !important;
+        }}
+        
+        /* CORREÇÃO DOS INPUTS (Selectbox e Multiselect) */
+        /* Garante que o fundo da caixa de seleção seja branco e o texto escuro */
+        .stSelectbox div[data-baseweb="select"] > div,
+        .stMultiSelect div[data-baseweb="select"] > div {{
+            background-color: {CORES['white']} !important;
+            color: {CORES['navy']} !important;
+            border-color: #E0E0E0 !important;
+        }}
+        
+        /* Cor do texto dentro do input */
+        .stSelectbox div[data-baseweb="select"] span,
+        .stMultiSelect div[data-baseweb="select"] span {{
+            color: {CORES['navy']} !important;
+        }}
+        
+        /* Cor do ícone da seta (Dropdown) */
+        .stSelectbox svg, .stMultiSelect svg {{
+            fill: {CORES['grey_light']} !important;
+        }}
 
-        /* CARDS HTML (Texto) */
+        /* TAGS DO MULTISELECT (Quando selecionado) */
+        span[data-baseweb="tag"] {{
+            background-color: rgba(23, 162, 184, 0.15) !important;
+            border: 1px solid rgba(23, 162, 184, 0.5);
+        }}
+        span[data-baseweb="tag"] span {{
+            color: {CORES['teal']} !important;
+        }}
+
+        /* --- RESTO DO CSS (CARDS E GRÁFICOS) --- */
         .css-card {{
             background-color: {CORES['white']};
             border-radius: 16px;
@@ -64,7 +95,7 @@ st.markdown(f"""
         }}
 
         .css-highlight-card {{
-            background: linear-gradient(135deg, {CORES['teal']} 0%, {CORES['navy']} 100%);
+            background: linear-gradient(135deg, {CORES['teal']} 0%, {CORES['teal_dark']} 100%);
             border-radius: 16px;
             padding: 20px;
             box-shadow: 0px 8px 20px rgba(23, 162, 184, 0.3);
@@ -75,7 +106,6 @@ st.markdown(f"""
             justify-content: center;
         }}
         
-        /* ESTILIZAÇÃO DOS GRÁFICOS (Container Plotly) */
         div[data-testid="stPlotlyChart"] {{
             background-color: {CORES['white']};
             border-radius: 16px;
@@ -84,7 +114,6 @@ st.markdown(f"""
             border: 1px solid #EFF0F6;
         }}
 
-        /* TIPOGRAFIA PADRONIZADA DOS CARDS HTML */
         .card-title {{
             font-size: 13px;
             font-weight: 600;
@@ -274,6 +303,7 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
 
 
