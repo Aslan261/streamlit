@@ -80,7 +80,7 @@ st.markdown(f"""
             border-radius: 16px;
             padding: 20px;
             box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
-            height: 180px; 
+            height: 200px; 
             border: 1px solid #EFF0F6;
             display: flex;
             flex-direction: column;
@@ -320,3 +320,4 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
