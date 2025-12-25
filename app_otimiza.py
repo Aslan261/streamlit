@@ -93,7 +93,7 @@ st.markdown(f"""
             padding: 20px;
             box-shadow: 0px 8px 20px rgba(23, 162, 184, 0.3);
             color: white;
-            height: 180px;
+            height: 200px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -248,7 +248,7 @@ with c3:
     )
     
     # Aplicar padronização com altura fixa de 180px para alinhar com os cards
-    fig_status = aplicar_estilo_padrao(fig_status, "Status de Pagamento", height=180)
+    fig_status = aplicar_estilo_padrao(fig_status, "Status de Pagamento", height=200)
     
     # Ajustes específicos para limpar este gráfico pequeno
     fig_status.update_layout(
@@ -320,4 +320,5 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
