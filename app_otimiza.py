@@ -255,7 +255,7 @@ with c3:
         xaxis=dict(showgrid=False, showticklabels=False, title=None), # Remove eixo X
         yaxis=dict(showgrid=False, showline=False, title=None, tickfont=dict(size=12, color=CORES['grey_text'])), # Limpa eixo Y
         showlegend=False,
-        margin=dict(t=20, b=100, l=0, r=20) # Margem inferior zero para aproveitar espaço
+        margin=dict(t=20, b=40, l=0, r=20) # Margem inferior zero para aproveitar espaço
     )
     fig_status.update_traces(textposition='inside', marker_line_width=0)
     
@@ -320,6 +320,7 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
 
 
