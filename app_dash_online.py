@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Painel",
+    page_title="Painel Otimiza",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -22,7 +22,7 @@ CORES = {
     "bg_light": "#F4F7FE",
     "white": "#FFFFFF",
     "red": "#FF5252",
-    "green": "#00C853"
+    "black": "#000000"
 }
 
 st.markdown(f"""
@@ -76,13 +76,13 @@ st.markdown(f"""
             color: {CORES['teal']} !important;
         }}
 
-        /* CARDS HTML (Texto) - Altura fixa 180px */
+        /* CARDS HTML (Texto) - Altura fixa 200px */
         .css-card {{
             background-color: {CORES['white']};
             border-radius: 16px;
             padding: 20px;
             box-shadow: 0px 5px 15px rgba(0, 0, 0, 0.04);
-            height: 180px; 
+            height: 200px; 
             border: 1px solid #EFF0F6;
             display: flex;
             flex-direction: column;
@@ -95,7 +95,7 @@ st.markdown(f"""
             padding: 20px;
             box-shadow: 0px 8px 20px rgba(23, 162, 184, 0.3);
             color: white;
-            height: 180px;
+            height: 200px;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -133,7 +133,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DADOS (ENRIQUECIDOS COM OPERACIONAL) ---
+# --- 3. DADOS (ATUALIZADO PARA SUPORTAR OPERACIONAL) ---
 @st.cache_data
 def load_data():
     np.random.seed(42)
@@ -144,13 +144,14 @@ def load_data():
     
     for _ in range(600):
         dt = np.random.choice(dates)
-        hora = np.random.randint(8, 18) 
+        # Adicionando hora para operacional
+        hora = np.random.randint(8, 18)
         dt_full = dt.replace(hour=hora, minute=np.random.randint(0, 59))
         
         tipo = np.random.choice(list(tipos_veiculo.keys()), p=[0.5, 0.2, 0.2, 0.1])
         preco = tipos_veiculo[tipo]
         
-        # Simulando tempos (em minutos)
+        # Simulando tempos operacionais (em minutos)
         t_vistoria = np.random.normal(20, 5)
         t_upload = np.random.normal(5, 2)
         t_validacao = np.random.normal(10, 3)
@@ -163,12 +164,10 @@ def load_data():
             'vistoriador': np.random.choice(vistoriadores),
             'tipo_veiculo': tipo,
             'valor': preco,
-            'status_pag': np.random.choice(['Pago', 'Pendente'], p=[0.85, 0.15]),
-            'status_oper': np.random.choice(['Concluído', 'Refazer', 'Em Análise'], p=[0.8, 0.1, 0.1]),
-            'tempo_vistoria': t_vistoria,
-            'tempo_upload': t_upload,
-            'tempo_validacao': t_validacao,
-            'tempo_total': t_vistoria + t_upload + t_validacao
+            'status': np.random.choice(['Pago', 'Pendente'], p=[0.85, 0.15]),
+            # Novos campos operacionais
+            'tempo_total': t_vistoria + t_upload + t_validacao,
+            'etapa_gargalo': np.random.choice(['Vistoria', 'Upload', 'Validação'], p=[0.2, 0.3, 0.5])
         })
     return pd.DataFrame(data)
 
@@ -186,7 +185,7 @@ def aplicar_estilo_padrao(fig, titulo, height=None):
         plot_bgcolor='white',
         paper_bgcolor='white',
         font=dict(family="Roboto"),
-        margin=dict(t=35, b=10, l=10, r=10),
+        margin=dict(t=40, b=40, l=10, r=10),
     )
     if height:
         fig.update_layout(height=height)
@@ -202,37 +201,37 @@ def aplicar_estilo_padrao(fig, titulo, height=None):
     )
     return fig
 
-# --- 5. SIDEBAR E NAVEGAÇÃO ---
+# --- 5. SIDEBAR ---
 with st.sidebar:
     c_img, c_txt = st.columns([1, 2])
     with c_img:
         st.image("https://cdn-icons-png.flaticon.com/512/2953/2953363.png", width=50)
     with c_txt:
         st.markdown("<div style='margin-top:10px; font-weight:bold; font-size:15px;'>Painel Otimiza</div>", unsafe_allow_html=True)
-        st.markdown(f"<div style='font-size:11px; color:{CORES['grey_light']};'>Gestão Inteligente</div>", unsafe_allow_html=True)
+        st.markdown(f"<div style='font-size:11px; color:{CORES['grey_light']};'>Gestão Integrada</div>", unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # MENU DE NAVEGAÇÃO
-    pagina = st.radio("Navegação", ["Financeiro", "Operacional"], label_visibility="collapsed")
+    # --- NOVO: NAVEGAÇÃO ---
+    pagina = st.radio("Selecione o Módulo", ["Financeiro", "Operacional"], label_visibility="visible")
     
     st.markdown("---")
-    st.caption("FILTROS GERAIS")
+    st.caption("FILTROS")
     periodo = st.selectbox("Período", ["Últimos 30 Dias", "Este Mês", "Ano Atual"])
     equipe = st.multiselect("Filtrar Vistoriador", df['vistoriador'].unique(), default=df['vistoriador'].unique())
 
 if equipe:
     df = df[df['vistoriador'].isin(equipe)]
 
-# --- 6. CONSTRUÇÃO DAS PÁGINAS ---
+# --- 6. RENDERIZAÇÃO CONDICIONAL DAS PÁGINAS ---
 
 # ==============================================================================
-# PÁGINA FINANCEIRA (SEU CÓDIGO ORIGINAL)
+# PÁGINA 1: FINANCEIRO (CÓDIGO ORIGINAL PRESERVADO)
 # ==============================================================================
 if pagina == "Financeiro":
     
-    st.markdown(f"<h3 style='margin-bottom:20px;'>Visão Financeira</h3>", unsafe_allow_html=True)
-    
+    st.markdown(f"<h3 style='color:{CORES['navy']}; margin-bottom: 20px;'>Visão Financeira</h3>", unsafe_allow_html=True)
+
     # LINHA 1: 3 CARDS ALINHADOS
     c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
 
@@ -259,40 +258,45 @@ if pagina == "Financeiro":
         """, unsafe_allow_html=True)
 
     with c3:
-        # Gráfico de Barras Horizontal (Status Pagamento)
-        df_status = df['status_pag'].value_counts().reset_index()
+        # GRÁFICO DE BARRAS HORIZONTAL (STATUS)
+        df_status = df['status'].value_counts().reset_index()
         df_status.columns = ['Status', 'Count']
         
         fig_status = px.bar(
             df_status, x='Count', y='Status', orientation='h', color='Status', 
             color_discrete_map={'Pago': CORES['teal'], 'Pendente': CORES['red']}, text='Count'
         )
-        fig_status = aplicar_estilo_padrao(fig_status, "Status de Pagamento", height=180)
+        
+        fig_status = aplicar_estilo_padrao(fig_status, "Status de Pagamento", height=200)
         fig_status.update_layout(
             xaxis=dict(showgrid=False, showticklabels=False, title=None), 
-            yaxis=dict(showgrid=False, showline=False, title=None, tickfont=dict(size=12, color=CORES['grey_text'])),
+            yaxis=dict(showgrid=False, showline=False, title=None, tickfont=dict(size=12, color=CORES['grey_text'])), 
             showlegend=False,
-            margin=dict(t=35, b=0, l=0, r=10)
         )
         fig_status.update_traces(textposition='inside', marker_line_width=0)
         st.plotly_chart(fig_status, use_container_width=True, config={'displayModeBar': False})
 
-    # LINHA 2: GRÁFICO CENTRAL
+
+    # LINHA 2: GRÁFICO DE BARRAS CENTRAL
     st.markdown("<br>", unsafe_allow_html=True)
+
     df_veiculo = df.groupby('tipo_veiculo')['id_laudo'].count().reset_index().sort_values('id_laudo', ascending=False)
     fig_bar = px.bar(
         df_veiculo, x='tipo_veiculo', y='id_laudo', color='tipo_veiculo',
         color_discrete_sequence=[CORES['teal'], '#20B2AA', '#008080', '#5F9EA0']
     )
+
     fig_bar = aplicar_estilo_padrao(fig_bar, "Quantidade de Vistorias por Tipo de Veículo", height=320)
     fig_bar.update_layout(
         xaxis=dict(title=None, tickfont=dict(color=CORES['grey_light'], size=12)), 
-        yaxis=dict(title=None, showgrid=True, gridcolor='#F0F2F6'),
+        yaxis=dict(title=None, showgrid=False, gridcolor=CORES['grey_light']),
         showlegend=False,
-        margin=dict(t=40, b=30, l=10, r=10)
+        margin=dict(t=40, b=60, l=10, r=10)
     )
-    fig_bar.update_traces(marker_line_width=0, texttemplate='%{y}', textposition='outside', cliponaxis=False)
+    fig_bar.update_traces(marker_line_width=0, texttemplate='%{y}', textposition='inside', cliponaxis=False)
+
     st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
+
 
     # LINHA 3: RANKING
     st.markdown("<br>", unsafe_allow_html=True)
@@ -320,22 +324,22 @@ if pagina == "Financeiro":
             i += 1
 
 # ==============================================================================
-# PÁGINA OPERACIONAL (NOVA VISÃO)
+# PÁGINA 2: OPERACIONAL (NOVA SEÇÃO)
 # ==============================================================================
 elif pagina == "Operacional":
     
-    st.markdown(f"<h3 style='margin-bottom:20px;'>Visão Operacional</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:{CORES['navy']}; margin-bottom: 20px;'>Visão Operacional (Chão de Fábrica)</h3>", unsafe_allow_html=True)
     
     # LINHA 1: KPIs OPERACIONAIS
     c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
     
     with c1:
-        # KPI 1: TEMPO MÉDIO TOTAL (TMA)
-        tma = df['tempo_total'].mean()
+        # KPI: Tempo Médio de Atendimento (TMA)
+        tma_medio = df['tempo_total'].mean()
         st.markdown(f"""
             <div class="css-highlight-card">
                 <div style="font-size:12px; opacity:0.9; margin-bottom:5px;">TEMPO MÉDIO (TMA)</div>
-                <div style="font-size:28px; font-weight:700; margin-bottom:5px;">{tma:.1f} min</div>
+                <div style="font-size:28px; font-weight:700; margin-bottom:5px;">{tma_medio:.1f} min</div>
                 <div style="font-size:11px; opacity:0.8;">
                     <span style="background-color:rgba(255,255,255,0.2); padding:3px 8px; border-radius:8px;">Meta: 30 min</span>
                 </div>
@@ -343,62 +347,60 @@ elif pagina == "Operacional":
         """, unsafe_allow_html=True)
         
     with c2:
-        # KPI 2: VOLUME HOJE (Simulado)
-        vol_hoje = len(df) // 30 # Média diária
+        # KPI: Volume Diário Médio (Simulado)
+        vol_dia = len(df) // 30
         st.markdown(f"""
             <div class="css-card">
-                <div class="card-title">Média Diária</div>
-                <div class="card-value">{vol_hoje} <span style="font-size:16px; color:{CORES['grey_light']};">laudos</span></div>
-                <div style="font-size:11px; color:{CORES['grey_light']}; margin-top:5px;">Capacidade: {vol_hoje + 5}</div>
+                <div class="card-title">Volume Médio Diário</div>
+                <div class="card-value">{vol_dia} <span style="font-size:16px; color:{CORES['grey_light']}">laudos</span></div>
+                <div style="font-size:11px; color:{CORES['grey_light']}; margin-top:5px;">Capacidade Instalada: {vol_dia + 5}</div>
             </div>
         """, unsafe_allow_html=True)
         
     with c3:
-        # KPI 3: GARGALOS (Etapas)
-        etapas = df[['tempo_vistoria', 'tempo_upload', 'tempo_validacao']].mean().reset_index()
-        etapas.columns = ['Etapa', 'Minutos']
-        etapas['Etapa'] = etapas['Etapa'].replace({'tempo_vistoria': 'Físico', 'tempo_upload': 'Upload', 'tempo_validacao': 'Validação'})
+        # KPI: Principais Gargalos (Etapas)
+        df_gargalo = df['etapa_gargalo'].value_counts().reset_index()
+        df_gargalo.columns = ['Etapa', 'Ocorrencias']
         
-        fig_gargalo = px.bar(
-            etapas, x='Minutos', y='Etapa', orientation='h', 
-            color='Etapa', color_discrete_sequence=[CORES['teal'], CORES['navy'], CORES['grey_text']],
-            text='Minutos'
+        fig_garg = px.bar(
+            df_gargalo, x='Ocorrencias', y='Etapa', orientation='h', color='Etapa',
+            color_discrete_sequence=[CORES['teal'], '#2B3674', '#64748B'], text='Ocorrencias'
         )
-        fig_gargalo = aplicar_estilo_padrao(fig_gargalo, "Tempo por Etapa", height=180)
-        fig_gargalo.update_layout(
+        fig_garg = aplicar_estilo_padrao(fig_garg, "Principais Gargalos", height=200)
+        fig_garg.update_layout(
             xaxis=dict(showgrid=False, showticklabels=False, title=None), 
-            yaxis=dict(showgrid=False, showline=False, title=None, tickfont=dict(size=12, color=CORES['grey_text'])),
+            yaxis=dict(showgrid=False, showline=False, title=None, tickfont=dict(size=12, color=CORES['grey_text'])), 
             showlegend=False,
-            margin=dict(t=35, b=0, l=0, r=10)
         )
-        fig_gargalo.update_traces(texttemplate='%{x:.1f}m', textposition='inside', marker_line_width=0)
-        st.plotly_chart(fig_gargalo, use_container_width=True, config={'displayModeBar': False})
-
-    # LINHA 2: HEATMAP DE OCUPAÇÃO
+        fig_garg.update_traces(textposition='inside', marker_line_width=0)
+        st.plotly_chart(fig_garg, use_container_width=True, config={'displayModeBar': False})
+        
+    # LINHA 2: HEATMAP DE OCUPAÇÃO (HORA x DIA)
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Preparando dados para Heatmap
-    heatmap_data = df.groupby(['hora', 'dia_semana']).size().reset_index(name='Qtd')
-    # Ordenação dias da semana
+    # Agrupamento para heatmap
+    df_heat = df.groupby(['hora', 'dia_semana']).size().reset_index(name='Qtd')
+    # Ordem dos dias
     dias_ordem = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     
     fig_heat = px.density_heatmap(
-        heatmap_data, x='hora', y='dia_semana', z='Qtd',
+        df_heat, x='hora', y='dia_semana', z='Qtd',
         color_continuous_scale=[CORES['bg_light'], CORES['teal'], CORES['navy']],
         category_orders={"dia_semana": dias_ordem}
     )
-    fig_heat = aplicar_estilo_padrao(fig_heat, "Mapa de Calor: Ocupação dos Boxes", height=320)
+    
+    fig_heat = aplicar_estilo_padrao(fig_heat, "Mapa de Calor: Horários de Pico", height=320)
     fig_heat.update_layout(
         xaxis=dict(title="Horário do Dia", tickmode='linear', dtick=1),
         yaxis=dict(title=None),
-        coloraxis_showscale=False, # Remove barra lateral de cores
+        coloraxis_showscale=False, # Remove barra de cores lateral para limpar
         margin=dict(t=40, b=40, l=10, r=10)
     )
     st.plotly_chart(fig_heat, use_container_width=True, config={'displayModeBar': False})
     
-    # LINHA 3: RANKING DE AGILIDADE
+    # LINHA 3: RANKING DE EFICIÊNCIA (TEMPO)
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown(f'<h5 style="color:{CORES["navy"]}; margin-bottom:15px; font-family:Roboto;">Eficiência Operacional (Tempo Médio)</h5>', unsafe_allow_html=True)
+    st.markdown(f'<h5 style="color:{CORES["navy"]}; margin-bottom:15px; font-family:Roboto;">Ranking de Agilidade (Tempo Médio)</h5>', unsafe_allow_html=True)
 
     team_ops = df.groupby('vistoriador').agg(
         tempo_medio=('tempo_total', 'mean'),
@@ -410,17 +412,13 @@ elif pagina == "Operacional":
     for vistoriador, row in team_ops.iterrows():
         if i < 4:
             with cols[i]:
-                # Cor condicional: Verde se rápido (<35m), Vermelho se lento
-                status_color = CORES['green'] if row['tempo_medio'] < 35 else CORES['red']
-                border_color = status_color if i == 0 else "#E0E0E0"
-                
+                border_color = CORES['teal'] if i == 0 else "#E0E0E0" 
                 html_card = f"""
                 <div class="css-card" style="height:auto; padding: 20px; text-align: center; border-bottom: 4px solid {border_color};">
                     <div style="font-weight:600; color:{CORES['navy']}; font-size:14px; margin-bottom:8px;">{vistoriador}</div>
-                    <div style="font-size:24px; font-weight:800; color:{status_color};">{row['tempo_medio']:.1f} min</div>
+                    <div style="font-size:24px; font-weight:800; color:{CORES['teal']};">{row['tempo_medio']:.1f} min</div>
                     <div style="font-size:11px; color:{CORES['grey_light']}; margin-top:5px;">{row['qtd']} laudos realizados</div>
                 </div>
                 """
                 st.markdown(html_card, unsafe_allow_html=True)
             i += 1
-
