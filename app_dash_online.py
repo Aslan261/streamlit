@@ -207,7 +207,7 @@ with st.sidebar:
     with c_img:
         st.image("https://cdn-icons-png.flaticon.com/512/2953/2953363.png", width=50)
     with c_txt:
-        st.markdown("<div style='margin-top:10px; font-weight:bold; font-size:15px;'>Painel Otimiza</div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:10px; font-weight:bold; font-size:15px;'>Painel</div>", unsafe_allow_html=True)
         st.markdown(f"<div style='font-size:11px; color:{CORES['grey_light']};'>Gestão Integrada</div>", unsafe_allow_html=True)
     
     st.markdown("---")
@@ -422,4 +422,5 @@ elif pagina == "Operacional":
                 """
                 st.markdown(html_card, unsafe_allow_html=True)
             i += 1
+
 
