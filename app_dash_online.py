@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Otimiza Financeiro",
+    page_title="Financeiro",
     page_icon="💲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -320,6 +320,7 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
 
 
