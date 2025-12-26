@@ -172,7 +172,7 @@ def aplicar_estilo_padrao(fig, titulo, height=None):
         paper_bgcolor='white',
         font=dict(family="Roboto"),
         # Margens otimizadas para evitar scroll e cortes
-        margin=dict(t=35, b=10, l=10, r=10),
+        margin=dict(t=40, b=40, l=10, r=10),
     )
     if height:
         fig.update_layout(height=height)
@@ -256,7 +256,6 @@ with c3:
         xaxis=dict(showgrid=False, showticklabels=False, title=None), # Remove eixo X
         yaxis=dict(showgrid=False, showline=False, title=None, tickfont=dict(size=12, color=CORES['grey_text'])), # Limpa eixo Y
         showlegend=False,
-        margin=dict(t=40, b=40, l=5, r=10) # Margem inferior zero para aproveitar espaço
     )
     fig_status.update_traces(textposition='inside', marker_line_width=0)
     
@@ -321,6 +320,7 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
 
 
