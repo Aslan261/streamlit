@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Painel Otimiza",
+    page_title="Painel",
     page_icon="📊",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -422,3 +422,4 @@ elif pagina == "Operacional":
                 """
                 st.markdown(html_card, unsafe_allow_html=True)
             i += 1
+
