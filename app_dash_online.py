@@ -279,11 +279,11 @@ fig_bar = aplicar_estilo_padrao(fig_bar, "Quantidade de Vistorias por Tipo de Ve
 
 # Ajustes Finais para evitar scroll e melhorar leitura
 fig_bar.update_layout(
-    xaxis=dict(title=None, tickfont=dict(color=CORES['grey_text'], size=12)), 
+    xaxis=dict(title=None, tickfont=dict(color=CORES['black'], size=12)), 
     yaxis=dict(title=None, showgrid=True, gridcolor='#F0F2F6'),
-    showlegend=False,
+    showlegend=True,
     # Margem inferior otimizada (b=0) para o gráfico 'sentar' no fundo do card
-    margin=dict(t=40, b=0, l=10, r=10)
+    # margin=dict(t=40, b=0, l=10, r=10)
 )
 fig_bar.update_traces(
     marker_line_width=0, 
@@ -320,6 +320,7 @@ for vistoriador, row in team_finance.iterrows():
             """
             st.markdown(html_card, unsafe_allow_html=True)
         i += 1
+
 
 
 
