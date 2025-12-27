@@ -50,7 +50,7 @@ STOPWORDS_PT = set([
     'mim', 'ti', 'si', 'este', 'esta', 'isto', 'esse', 'essa', 'isso', 
     'aquele', 'aquela', 'aquilo', 'meu', 'teu', 'nosso', 'vosso', 'tua', 
     'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo', 'não',
-    'eis', 'quis', 'então'
+    'eis', 'quis', 'então', 'amém', 'segunda'
 ])
 
 # Lista de principais figuras bíblicas para priorizar na busca
