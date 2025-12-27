@@ -1,6 +1,6 @@
 streamlit
 pandas
 networkx
-plotly.graph_objects
-plotly.express
-collections
+plotly
+plotly
+
