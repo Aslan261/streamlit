@@ -3,3 +3,5 @@ spacy
 networkx
 matplotlib
 collections
+plotly
+re
