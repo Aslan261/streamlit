@@ -49,9 +49,10 @@ STOPWORDS_PT = set([
     'eu', 'tu', 'nós', 'vós', 'me', 'te', 'lhe', 'nos', 'vos', 'lhes', 
     'mim', 'ti', 'si', 'este', 'esta', 'isto', 'esse', 'essa', 'isso', 
     'aquele', 'aquela', 'aquilo', 'meu', 'teu', 'nosso', 'vosso', 'tua', 
-    'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo'
-])
+    'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo', 'não',
+    'eis', 'quis', 'então', 'amém', 'segunda'
 
+])
 # Lista de principais figuras bíblicas para priorizar na busca
 BIG_ENTITIES = [
     'Deus', 'Jesus', 'Senhor', 'Espírito', 'Moisés', 'Arão', 'Faraó', 'Josué', 
@@ -59,7 +60,7 @@ BIG_ENTITIES = [
     'Daniel', 'Pedro', 'Paulo', 'João', 'Tiago', 'Maria', 'José', 'Abraão', 
     'Isaque', 'Jacó', 'José', 'Judá', 'Pilatos', 'Herodes', 'Judas', 'Timóteo',
     'Barnabé', 'Silas', 'Tito', 'Noé', 'Adão', 'Eva', 'Caim', 'Abel', 'Golias',
-    'Jonas', 'Jó', 'Samuel', 'Absalão', 'Nabucodonosor'
+    'Jonas', 'Jó', 'Samuel', 'Absalão', 'Nabucodonosor', 'Calebe'
 ]
 
 def simple_entity_extractor(text):
