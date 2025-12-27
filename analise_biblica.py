@@ -49,8 +49,7 @@ STOPWORDS_PT = set([
     'eu', 'tu', 'nós', 'vós', 'me', 'te', 'lhe', 'nos', 'vos', 'lhes', 
     'mim', 'ti', 'si', 'este', 'esta', 'isto', 'esse', 'essa', 'isso', 
     'aquele', 'aquela', 'aquilo', 'meu', 'teu', 'nosso', 'vosso', 'tua', 
-    'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo', 'não',
-    'eis', 'quis', 'então', 'amém', 'segunda'
+    'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo'
 ])
 
 # Lista de principais figuras bíblicas para priorizar na busca
@@ -60,7 +59,7 @@ BIG_ENTITIES = [
     'Daniel', 'Pedro', 'Paulo', 'João', 'Tiago', 'Maria', 'José', 'Abraão', 
     'Isaque', 'Jacó', 'José', 'Judá', 'Pilatos', 'Herodes', 'Judas', 'Timóteo',
     'Barnabé', 'Silas', 'Tito', 'Noé', 'Adão', 'Eva', 'Caim', 'Abel', 'Golias',
-    'Jonas', 'Jó', 'Samuel', 'Absalão', 'Nabucodonosor', 'Calebe'
+    'Jonas', 'Jó', 'Samuel', 'Absalão', 'Nabucodonosor'
 ]
 
 def simple_entity_extractor(text):
@@ -181,7 +180,11 @@ if uploaded_file is not None:
             
             # Análise Temporal/Posicional
             st.subheader("Onde a Entidade Aparece?")
-            selected_entity = st.selectbox("Selecione uma entidade para rastrear:", df_ent['Entidade'].tolist())
+            
+            # Criando lista completa e ordenada de todas as entidades únicas encontradas
+            unique_entities_list = sorted(list(set(all_entities)))
+            
+            selected_entity = st.selectbox("Selecione uma entidade para rastrear:", unique_entities_list)
             
             if selected_entity:
                 # Filtrar dataframe
