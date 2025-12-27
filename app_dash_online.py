@@ -12,7 +12,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. CONFIGURAÇÃO DE ESTILO E CORES (PADRONIZAÇÃO) ---
+# --- 2. CONFIGURAÇÃO DE ESTILO E CORES ---
 CORES = {
     "teal": "#17A2B8",
     "teal_dark": "#008080",
@@ -47,7 +47,7 @@ st.markdown(f"""
             background-color: {CORES['white']};
             border-right: 1px solid #E0E0E0;
         }}
-        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {{
+        [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label, [data-testid="stSidebar"] div[data-testid="stMarkdownContainer"] p {{
             color: {CORES['navy']} !important;
         }}
         
@@ -76,7 +76,7 @@ st.markdown(f"""
             color: {CORES['teal']} !important;
         }}
 
-        /* CARDS HTML (Texto) - Altura fixa 200px */
+        /* CARDS HTML */
         .css-card {{
             background-color: {CORES['white']};
             border-radius: 16px;
@@ -101,7 +101,6 @@ st.markdown(f"""
             justify-content: center;
         }}
         
-        /* ESTILIZAÇÃO DOS GRÁFICOS (Container Plotly) */
         div[data-testid="stPlotlyChart"] {{
             background-color: {CORES['white']};
             border-radius: 16px;
@@ -133,7 +132,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DADOS (ATUALIZADO PARA SUPORTAR COMERCIAL) ---
+# --- 3. DADOS COMPLETOS (FINANCEIRO + OPERACIONAL + COMERCIAL) ---
 @st.cache_data
 def load_data():
     np.random.seed(42)
@@ -142,7 +141,7 @@ def load_data():
     vistoriadores = ['Carlos Silva', 'Ana Souza', 'Roberto Dias', 'Fernanda Lima']
     tipos_veiculo = {'Passeio': 150, 'Moto': 100, 'SUV/Van': 200, 'Caminhão': 300}
     
-    # Listas para o módulo Comercial
+    # Dados para o módulo Comercial
     origens = ['Google Ads', 'Indicação', 'Parceiros', 'Instagram', 'Balcão']
     categorias = ['Particular', 'Lojista', 'Frota', 'App']
 
@@ -160,8 +159,8 @@ def load_data():
         
         data.append({
             'id_laudo': np.random.randint(10000, 99999),
-            'data': dt_full, # Usando data completa para ordenação
-            'dia_str': dt_full.strftime('%d/%m'), # String para gráficos
+            'data': dt_full, 
+            'dia_str': dt_full.strftime('%d/%m'),
             'dia_semana': dt_full.strftime('%a'),
             'hora': hora,
             'vistoriador': np.random.choice(vistoriadores),
@@ -170,7 +169,6 @@ def load_data():
             'status': np.random.choice(['Pago', 'Pendente'], p=[0.85, 0.15]),
             'tempo_total': t_vistoria + t_upload + t_validacao,
             'etapa_gargalo': np.random.choice(['Vistoria', 'Upload', 'Validação'], p=[0.2, 0.3, 0.5]),
-            # Novos campos comerciais
             'origem': np.random.choice(origens, p=[0.2, 0.3, 0.3, 0.1, 0.1]),
             'categoria_cliente': np.random.choice(categorias, p=[0.4, 0.4, 0.1, 0.1])
         })
@@ -178,7 +176,7 @@ def load_data():
 
 df = load_data()
 
-# --- 4. FUNÇÃO AUXILIAR DE LAYOUT DE GRÁFICO ---
+# --- 4. FUNÇÃO AUXILIAR DE LAYOUT ---
 def aplicar_estilo_padrao(fig, titulo, height=None):
     fig.update_layout(
         title=dict(
@@ -206,7 +204,7 @@ def aplicar_estilo_padrao(fig, titulo, height=None):
     )
     return fig
 
-# --- 5. SIDEBAR ---
+# --- 5. SIDEBAR COM MAIS FILTROS ---
 with st.sidebar:
     c_img, c_txt = st.columns([1, 2])
     with c_img:
@@ -217,18 +215,44 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # MENU DE NAVEGAÇÃO
+    # NAVEGAÇÃO
     pagina = st.radio("Selecione o Módulo", ["Financeiro", "Operacional", "Comercial"], label_visibility="visible")
     
     st.markdown("---")
-    st.caption("FILTROS")
+    st.markdown(f"<div style='font-size:12px; font-weight:bold; color:{CORES['navy']}; margin-bottom:10px;'>FILTROS GERAIS</div>", unsafe_allow_html=True)
+    
+    # FILTRO DE DATA (Estático no exemplo)
     periodo = st.selectbox("Período", ["Últimos 30 Dias", "Este Mês", "Ano Atual"])
-    equipe = st.multiselect("Filtrar Vistoriador", df['vistoriador'].unique(), default=df['vistoriador'].unique())
+    
+    # --- FILTROS ADICIONAIS ---
+    # 1. Equipe
+    f_equipe = st.multiselect("Vistoriador", df['vistoriador'].unique(), default=[])
+    
+    # 2. Tipo de Veículo
+    f_veiculo = st.multiselect("Tipo de Veículo", df['tipo_veiculo'].unique(), default=[])
+    
+    # 3. Status Pagamento
+    f_status = st.multiselect("Status Pagamento", df['status'].unique(), default=[])
+    
+    # 4. Canal de Venda (Origem)
+    f_origem = st.multiselect("Canal de Venda", df['origem'].unique(), default=[])
+    
+    # 5. Categoria Cliente
+    f_cat = st.multiselect("Categoria Cliente", df['categoria_cliente'].unique(), default=[])
 
-if equipe:
-    df = df[df['vistoriador'].isin(equipe)]
+# --- LÓGICA DE FILTRAGEM ---
+if f_equipe:
+    df = df[df['vistoriador'].isin(f_equipe)]
+if f_veiculo:
+    df = df[df['tipo_veiculo'].isin(f_veiculo)]
+if f_status:
+    df = df[df['status'].isin(f_status)]
+if f_origem:
+    df = df[df['origem'].isin(f_origem)]
+if f_cat:
+    df = df[df['categoria_cliente'].isin(f_cat)]
 
-# --- 6. RENDERIZAÇÃO CONDICIONAL DAS PÁGINAS ---
+# --- 6. RENDERIZAÇÃO DAS PÁGINAS ---
 
 # ==============================================================================
 # PÁGINA 1: FINANCEIRO
@@ -323,7 +347,7 @@ if pagina == "Financeiro":
             i += 1
 
 # ==============================================================================
-# PÁGINA 2: OPERACIONAL (CÓDIGO ANTERIOR)
+# PÁGINA 2: OPERACIONAL
 # ==============================================================================
 elif pagina == "Operacional":
     
@@ -414,7 +438,7 @@ elif pagina == "Operacional":
             i += 1
 
 # ==============================================================================
-# PÁGINA 3: COMERCIAL (NOVA SEÇÃO)
+# PÁGINA 3: COMERCIAL
 # ==============================================================================
 elif pagina == "Comercial":
     
@@ -422,9 +446,8 @@ elif pagina == "Comercial":
     
     c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
     
-    # KPI 1: Novos Clientes (Simulado como 'Particular')
+    # KPI 1
     with c1:
-        # Assumindo que 'Particular' são vendas balcão/novos
         novos_clientes = len(df[df['categoria_cliente'] == 'Particular'])
         st.markdown(f"""
             <div class="css-highlight-card">
@@ -436,7 +459,7 @@ elif pagina == "Comercial":
             </div>
         """, unsafe_allow_html=True)
         
-    # KPI 2: Principal Canal de Venda
+    # KPI 2
     with c2:
         top_origem = df['origem'].mode()[0]
         qtd_top = len(df[df['origem'] == top_origem])
@@ -448,7 +471,7 @@ elif pagina == "Comercial":
             </div>
         """, unsafe_allow_html=True)
         
-    # KPI 3: Mix de Carteira (Gráfico Rosca)
+    # KPI 3
     with c3:
         df_mix = df['categoria_cliente'].value_counts().reset_index()
         df_mix.columns = ['Tipo', 'Qtd']
@@ -465,7 +488,7 @@ elif pagina == "Comercial":
         )
         st.plotly_chart(fig_mix, use_container_width=True, config={'displayModeBar': False})
         
-    # GRÁFICO CENTRAL: VENDAS POR ORIGEM
+    # GRÁFICO CENTRAL
     st.markdown("<br>", unsafe_allow_html=True)
     
     df_origem = df.groupby('origem')['id_laudo'].count().reset_index().sort_values('id_laudo', ascending=False)
@@ -484,10 +507,9 @@ elif pagina == "Comercial":
     fig_origem.update_traces(marker_line_width=0, texttemplate='%{y}', textposition='outside')
     st.plotly_chart(fig_origem, use_container_width=True, config={'displayModeBar': False})
     
-    # GRÁFICO DE LINHA: TENDÊNCIA DE VENDAS (DIÁRIA)
+    # GRÁFICO DE LINHA
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Agrupando por dia (simulando evolução)
     df_evo = df.groupby('dia_str')['id_laudo'].count().reset_index()
     
     fig_evo = px.area(
