@@ -6,8 +6,8 @@ from datetime import datetime, timedelta
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Painel",
-    page_icon="📊",
+    page_title="Painel Otimiza",
+    page_icon="💲",
     layout="wide",
     initial_sidebar_state="expanded"
 )
@@ -133,7 +133,7 @@ st.markdown(f"""
     </style>
 """, unsafe_allow_html=True)
 
-# --- 3. DADOS (ATUALIZADO PARA SUPORTAR OPERACIONAL) ---
+# --- 3. DADOS (ATUALIZADO PARA SUPORTAR COMERCIAL) ---
 @st.cache_data
 def load_data():
     np.random.seed(42)
@@ -142,34 +142,39 @@ def load_data():
     vistoriadores = ['Carlos Silva', 'Ana Souza', 'Roberto Dias', 'Fernanda Lima']
     tipos_veiculo = {'Passeio': 150, 'Moto': 100, 'SUV/Van': 200, 'Caminhão': 300}
     
+    # Listas para o módulo Comercial
+    origens = ['Google Ads', 'Indicação', 'Parceiros', 'Instagram', 'Balcão']
+    categorias = ['Particular', 'Lojista', 'Frota', 'App']
+
     for _ in range(600):
         dt = np.random.choice(dates)
-        # Adicionando hora para operacional
         hora = np.random.randint(8, 18)
         dt_full = dt.replace(hour=hora, minute=np.random.randint(0, 59))
         
         tipo = np.random.choice(list(tipos_veiculo.keys()), p=[0.5, 0.2, 0.2, 0.1])
         preco = tipos_veiculo[tipo]
         
-        # Simulando tempos operacionais (em minutos)
         t_vistoria = np.random.normal(20, 5)
         t_upload = np.random.normal(5, 2)
         t_validacao = np.random.normal(10, 3)
         
         data.append({
             'id_laudo': np.random.randint(10000, 99999),
-            'data': dt_full,
-            'dia_semana': dt_full.strftime('%a'), # Seg, Ter...
+            'data': dt_full, # Usando data completa para ordenação
+            'dia_str': dt_full.strftime('%d/%m'), # String para gráficos
+            'dia_semana': dt_full.strftime('%a'),
             'hora': hora,
             'vistoriador': np.random.choice(vistoriadores),
             'tipo_veiculo': tipo,
             'valor': preco,
             'status': np.random.choice(['Pago', 'Pendente'], p=[0.85, 0.15]),
-            # Novos campos operacionais
             'tempo_total': t_vistoria + t_upload + t_validacao,
-            'etapa_gargalo': np.random.choice(['Vistoria', 'Upload', 'Validação'], p=[0.2, 0.3, 0.5])
+            'etapa_gargalo': np.random.choice(['Vistoria', 'Upload', 'Validação'], p=[0.2, 0.3, 0.5]),
+            # Novos campos comerciais
+            'origem': np.random.choice(origens, p=[0.2, 0.3, 0.3, 0.1, 0.1]),
+            'categoria_cliente': np.random.choice(categorias, p=[0.4, 0.4, 0.1, 0.1])
         })
-    return pd.DataFrame(data)
+    return pd.DataFrame(data).sort_values('data')
 
 df = load_data()
 
@@ -207,13 +212,13 @@ with st.sidebar:
     with c_img:
         st.image("https://cdn-icons-png.flaticon.com/512/2953/2953363.png", width=50)
     with c_txt:
-        st.markdown("<div style='margin-top:10px; font-weight:bold; font-size:15px;'>Painel</div>", unsafe_allow_html=True)
+        st.markdown("<div style='margin-top:10px; font-weight:bold; font-size:15px;'>Painel Otimiza</div>", unsafe_allow_html=True)
         st.markdown(f"<div style='font-size:11px; color:{CORES['grey_light']};'>Gestão Integrada</div>", unsafe_allow_html=True)
     
     st.markdown("---")
     
-    # --- NOVO: NAVEGAÇÃO ---
-    pagina = st.radio("Selecione o Módulo", ["Financeiro", "Operacional"], label_visibility="visible")
+    # MENU DE NAVEGAÇÃO
+    pagina = st.radio("Selecione o Módulo", ["Financeiro", "Operacional", "Comercial"], label_visibility="visible")
     
     st.markdown("---")
     st.caption("FILTROS")
@@ -226,13 +231,12 @@ if equipe:
 # --- 6. RENDERIZAÇÃO CONDICIONAL DAS PÁGINAS ---
 
 # ==============================================================================
-# PÁGINA 1: FINANCEIRO (CÓDIGO ORIGINAL PRESERVADO)
+# PÁGINA 1: FINANCEIRO
 # ==============================================================================
 if pagina == "Financeiro":
     
     st.markdown(f"<h3 style='color:{CORES['navy']}; margin-bottom: 20px;'>Visão Financeira</h3>", unsafe_allow_html=True)
 
-    # LINHA 1: 3 CARDS ALINHADOS
     c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
 
     with c1:
@@ -258,7 +262,6 @@ if pagina == "Financeiro":
         """, unsafe_allow_html=True)
 
     with c3:
-        # GRÁFICO DE BARRAS HORIZONTAL (STATUS)
         df_status = df['status'].value_counts().reset_index()
         df_status.columns = ['Status', 'Count']
         
@@ -276,8 +279,6 @@ if pagina == "Financeiro":
         fig_status.update_traces(textposition='inside', marker_line_width=0)
         st.plotly_chart(fig_status, use_container_width=True, config={'displayModeBar': False})
 
-
-    # LINHA 2: GRÁFICO DE BARRAS CENTRAL
     st.markdown("<br>", unsafe_allow_html=True)
 
     df_veiculo = df.groupby('tipo_veiculo')['id_laudo'].count().reset_index().sort_values('id_laudo', ascending=False)
@@ -297,8 +298,6 @@ if pagina == "Financeiro":
 
     st.plotly_chart(fig_bar, use_container_width=True, config={'displayModeBar': False})
 
-
-    # LINHA 3: RANKING
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(f'<h5 style="color:{CORES["navy"]}; margin-bottom:15px; font-family:Roboto;">Receita Gerada por Vistoriador</h5>', unsafe_allow_html=True)
 
@@ -324,22 +323,20 @@ if pagina == "Financeiro":
             i += 1
 
 # ==============================================================================
-# PÁGINA 2: OPERACIONAL (NOVA SEÇÃO)
+# PÁGINA 2: OPERACIONAL (CÓDIGO ANTERIOR)
 # ==============================================================================
 elif pagina == "Operacional":
     
-    st.markdown(f"<h3 style='color:{CORES['navy']}; margin-bottom: 20px;'>Visão Operacional (Chão de Fábrica)</h3>", unsafe_allow_html=True)
+    st.markdown(f"<h3 style='color:{CORES['navy']}; margin-bottom: 20px;'>Visão Operacional</h3>", unsafe_allow_html=True)
     
-    # LINHA 1: KPIs OPERACIONAIS
     c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
     
     with c1:
-        # KPI: Tempo Médio de Atendimento (TMA)
-        tma_medio = df['tempo_total'].mean()
+        tma = df['tempo_total'].mean()
         st.markdown(f"""
             <div class="css-highlight-card">
                 <div style="font-size:12px; opacity:0.9; margin-bottom:5px;">TEMPO MÉDIO (TMA)</div>
-                <div style="font-size:28px; font-weight:700; margin-bottom:5px;">{tma_medio:.1f} min</div>
+                <div style="font-size:28px; font-weight:700; margin-bottom:5px;">{tma:.1f} min</div>
                 <div style="font-size:11px; opacity:0.8;">
                     <span style="background-color:rgba(255,255,255,0.2); padding:3px 8px; border-radius:8px;">Meta: 30 min</span>
                 </div>
@@ -347,7 +344,6 @@ elif pagina == "Operacional":
         """, unsafe_allow_html=True)
         
     with c2:
-        # KPI: Volume Diário Médio (Simulado)
         vol_dia = len(df) // 30
         st.markdown(f"""
             <div class="css-card">
@@ -358,7 +354,6 @@ elif pagina == "Operacional":
         """, unsafe_allow_html=True)
         
     with c3:
-        # KPI: Principais Gargalos (Etapas)
         df_gargalo = df['etapa_gargalo'].value_counts().reset_index()
         df_gargalo.columns = ['Etapa', 'Ocorrencias']
         
@@ -375,12 +370,9 @@ elif pagina == "Operacional":
         fig_garg.update_traces(textposition='inside', marker_line_width=0)
         st.plotly_chart(fig_garg, use_container_width=True, config={'displayModeBar': False})
         
-    # LINHA 2: HEATMAP DE OCUPAÇÃO (HORA x DIA)
     st.markdown("<br>", unsafe_allow_html=True)
     
-    # Agrupamento para heatmap
     df_heat = df.groupby(['hora', 'dia_semana']).size().reset_index(name='Qtd')
-    # Ordem dos dias
     dias_ordem = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     
     fig_heat = px.density_heatmap(
@@ -388,24 +380,22 @@ elif pagina == "Operacional":
         color_continuous_scale=[CORES['bg_light'], CORES['teal'], CORES['navy']],
         category_orders={"dia_semana": dias_ordem}
     )
-    
     fig_heat = aplicar_estilo_padrao(fig_heat, "Mapa de Calor: Horários de Pico", height=320)
     fig_heat.update_layout(
         xaxis=dict(title="Horário do Dia", tickmode='linear', dtick=1),
         yaxis=dict(title=None),
-        coloraxis_showscale=False, # Remove barra de cores lateral para limpar
+        coloraxis_showscale=False,
         margin=dict(t=40, b=40, l=10, r=10)
     )
     st.plotly_chart(fig_heat, use_container_width=True, config={'displayModeBar': False})
     
-    # LINHA 3: RANKING DE EFICIÊNCIA (TEMPO)
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown(f'<h5 style="color:{CORES["navy"]}; margin-bottom:15px; font-family:Roboto;">Ranking de Agilidade (Tempo Médio)</h5>', unsafe_allow_html=True)
 
     team_ops = df.groupby('vistoriador').agg(
         tempo_medio=('tempo_total', 'mean'),
         qtd=('id_laudo', 'count')
-    ).sort_values('tempo_medio', ascending=True) # Menor tempo é melhor
+    ).sort_values('tempo_medio', ascending=True)
 
     cols = st.columns(4, gap="medium")
     i = 0
@@ -423,4 +413,91 @@ elif pagina == "Operacional":
                 st.markdown(html_card, unsafe_allow_html=True)
             i += 1
 
-
+# ==============================================================================
+# PÁGINA 3: COMERCIAL (NOVA SEÇÃO)
+# ==============================================================================
+elif pagina == "Comercial":
+    
+    st.markdown(f"<h3 style='color:{CORES['navy']}; margin-bottom: 20px;'>Visão Comercial (Vendas & CRM)</h3>", unsafe_allow_html=True)
+    
+    c1, c2, c3 = st.columns([1, 1, 1], gap="medium")
+    
+    # KPI 1: Novos Clientes (Simulado como 'Particular')
+    with c1:
+        # Assumindo que 'Particular' são vendas balcão/novos
+        novos_clientes = len(df[df['categoria_cliente'] == 'Particular'])
+        st.markdown(f"""
+            <div class="css-highlight-card">
+                <div style="font-size:12px; opacity:0.9; margin-bottom:5px;">NOVOS CLIENTES (PARTICULAR)</div>
+                <div style="font-size:28px; font-weight:700; margin-bottom:5px;">{novos_clientes}</div>
+                <div style="font-size:11px; opacity:0.8;">
+                    <span style="background-color:rgba(255,255,255,0.2); padding:3px 8px; border-radius:8px;">Conversão Balcão: 22%</span>
+                </div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+    # KPI 2: Principal Canal de Venda
+    with c2:
+        top_origem = df['origem'].mode()[0]
+        qtd_top = len(df[df['origem'] == top_origem])
+        st.markdown(f"""
+            <div class="css-card">
+                <div class="card-title">Canal Principal</div>
+                <div class="card-value" style="font-size:24px;">{top_origem}</div>
+                <div style="font-size:11px; color:{CORES['grey_light']}; margin-top:5px;">Responsável por {qtd_top} vendas</div>
+            </div>
+        """, unsafe_allow_html=True)
+        
+    # KPI 3: Mix de Carteira (Gráfico Rosca)
+    with c3:
+        df_mix = df['categoria_cliente'].value_counts().reset_index()
+        df_mix.columns = ['Tipo', 'Qtd']
+        
+        fig_mix = px.pie(
+            df_mix, names='Tipo', values='Qtd', hole=0.6,
+            color='Tipo', color_discrete_sequence=[CORES['teal'], '#2B3674', '#64748B', '#A3AED0']
+        )
+        fig_mix = aplicar_estilo_padrao(fig_mix, "Mix de Carteira", height=200)
+        fig_mix.update_layout(
+            margin=dict(t=35, b=10, l=10, r=10),
+            showlegend=True,
+            legend=dict(orientation="v", yanchor="middle", y=0.5, xanchor="right", x=1.2)
+        )
+        st.plotly_chart(fig_mix, use_container_width=True, config={'displayModeBar': False})
+        
+    # GRÁFICO CENTRAL: VENDAS POR ORIGEM
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    df_origem = df.groupby('origem')['id_laudo'].count().reset_index().sort_values('id_laudo', ascending=False)
+    
+    fig_origem = px.bar(
+        df_origem, x='origem', y='id_laudo', color='origem',
+        color_discrete_sequence=[CORES['teal'], '#20B2AA', '#008080', '#5F9EA0']
+    )
+    fig_origem = aplicar_estilo_padrao(fig_origem, "Performance por Canal de Aquisição", height=320)
+    fig_origem.update_layout(
+        xaxis=dict(title=None, tickfont=dict(color=CORES['grey_light'], size=12)),
+        yaxis=dict(title=None, showgrid=True, gridcolor='#F0F2F6'),
+        showlegend=False,
+        margin=dict(t=40, b=40, l=10, r=10)
+    )
+    fig_origem.update_traces(marker_line_width=0, texttemplate='%{y}', textposition='outside')
+    st.plotly_chart(fig_origem, use_container_width=True, config={'displayModeBar': False})
+    
+    # GRÁFICO DE LINHA: TENDÊNCIA DE VENDAS (DIÁRIA)
+    st.markdown("<br>", unsafe_allow_html=True)
+    
+    # Agrupando por dia (simulando evolução)
+    df_evo = df.groupby('dia_str')['id_laudo'].count().reset_index()
+    
+    fig_evo = px.area(
+        df_evo, x='dia_str', y='id_laudo', markers=True
+    )
+    fig_evo.update_traces(line_color=CORES['teal'], fillcolor='rgba(23, 162, 184, 0.2)')
+    fig_evo = aplicar_estilo_padrao(fig_evo, "Evolução Diária de Vendas", height=300)
+    fig_evo.update_layout(
+        xaxis=dict(title=None, tickfont=dict(color=CORES['grey_light'], size=10)),
+        yaxis=dict(title=None, showgrid=True, gridcolor='#F0F2F6'),
+        margin=dict(t=40, b=40, l=10, r=10)
+    )
+    st.plotly_chart(fig_evo, use_container_width=True, config={'displayModeBar': False})
