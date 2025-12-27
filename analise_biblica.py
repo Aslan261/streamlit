@@ -41,7 +41,6 @@ def load_data(file):
         return None
 
 # Lista básica de stopwords e personagens para ajudar na extração simples
-# Em um cenário ideal, usaríamos spacy, mas isso garante portabilidade
 STOPWORDS_PT = set([
     'a', 'o', 'as', 'os', 'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 
     'nos', 'nas', 'por', 'pelo', 'pela', 'para', 'que', 'e', 'é', 'era', 
@@ -50,10 +49,10 @@ STOPWORDS_PT = set([
     'eu', 'tu', 'nós', 'vós', 'me', 'te', 'lhe', 'nos', 'vos', 'lhes', 
     'mim', 'ti', 'si', 'este', 'esta', 'isto', 'esse', 'essa', 'isso', 
     'aquele', 'aquela', 'aquilo', 'meu', 'teu', 'nosso', 'vosso', 'tua', 
-    'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo' # Adicionei divindades aqui para focar em humanos se quiser, ou remova
+    'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo'
 ])
 
-# Lista de principais figuras bíblicas para priorizar na busca (exemplo expandido)
+# Lista de principais figuras bíblicas para priorizar na busca
 BIG_ENTITIES = [
     'Deus', 'Jesus', 'Senhor', 'Espírito', 'Moisés', 'Arão', 'Faraó', 'Josué', 
     'Davi', 'Saul', 'Salomão', 'Elias', 'Eliseu', 'Isaías', 'Jeremias', 'Ezequiel', 
@@ -212,20 +211,13 @@ if uploaded_file is not None:
             st.header("Análise de Redes Sociais Bíblica")
             st.markdown("Conexões baseadas em co-ocorrência: **Personagens que aparecem no mesmo versículo**.")
             
-            # Filtros
-            min_weight = st.slider("Mínimo de Co-ocorrências (Peso)", 1, 50, 5)
-            max_nodes = st.slider("Máximo de Nós no Grafo", 10, 200, 50)
-            
-            # Construção do Grafo
-            G = nx.Graph()
-            
-            # Iterar sobre versículos e criar arestas
+            # --- PREPARAÇÃO DOS DADOS ---
             edge_counter = Counter()
             node_counter = Counter()
             
+            # Iterar sobre versículos e criar arestas (feito antes dos filtros para ter o universo completo)
             for entities in df['Entidades']:
                 if len(entities) > 1:
-                    # Ordenar para garantir pares consistentes (A, B) e não (B, A)
                     sorted_ents = sorted(entities)
                     for i in range(len(sorted_ents)):
                         node_counter[sorted_ents[i]] += 1
@@ -233,19 +225,65 @@ if uploaded_file is not None:
                             edge = (sorted_ents[i], sorted_ents[j])
                             edge_counter[edge] += 1
             
-            # Adicionar nós e arestas ao grafo com filtros
-            # Primeiro, pegar os top nós
-            top_nodes = [n for n, c in node_counter.most_common(max_nodes)]
+            # --- FILTROS DE INTERFACE ---
+            col_filters_1, col_filters_2 = st.columns(2)
             
-            for edge, weight in edge_counter.items():
-                if weight >= min_weight:
-                    source, target = edge
-                    if source in top_nodes and target in top_nodes:
-                        G.add_edge(source, target, weight=weight)
-                        G.add_node(source, size=node_counter[source])
-                        G.add_node(target, size=node_counter[target])
+            with col_filters_1:
+                min_weight = st.slider("Mínimo de Co-ocorrências (Peso)", 1, 50, 5)
             
-            # Métricas da Rede
+            # Lista de entidades ordenada alfabeticamente para o dropdown
+            all_available_nodes = sorted([k for k, v in node_counter.items() if v > 1])
+            
+            with col_filters_2:
+                # Seletor de modo: Visão Geral ou Entidade Específica
+                focus_option = st.selectbox(
+                    "Focar em Entidade Específica", 
+                    ["Visão Geral (Top Conectados)"] + all_available_nodes
+                )
+
+            # Filtro condicional de 'Máximo de Nós' (só mostra se for Visão Geral)
+            max_nodes = 50
+            if focus_option == "Visão Geral (Top Conectados)":
+                max_nodes = st.slider("Máximo de Nós no Grafo", 10, 200, 50)
+
+            # --- CONSTRUÇÃO DO GRAFO (G) ---
+            G = nx.Graph()
+            
+            if focus_option == "Visão Geral (Top Conectados)":
+                # LÓGICA ORIGINAL: Filtra pelos TOP N mais frequentes
+                top_nodes = [n for n, c in node_counter.most_common(max_nodes)]
+                
+                for edge, weight in edge_counter.items():
+                    if weight >= min_weight:
+                        source, target = edge
+                        if source in top_nodes and target in top_nodes:
+                            G.add_edge(source, target, weight=weight)
+                            G.add_node(source, size=node_counter[source])
+                            G.add_node(target, size=node_counter[target])
+                            
+            else:
+                # NOVA LÓGICA: Rede Egocêntrica (Foco na entidade selecionada)
+                target_entity = focus_option
+                
+                # Adiciona o nó central
+                G.add_node(target_entity, size=node_counter[target_entity])
+                
+                # Busca vizinhos conectados a esta entidade
+                found_connections = False
+                for edge, weight in edge_counter.items():
+                    if weight >= min_weight:
+                        if target_entity in edge:
+                            found_connections = True
+                            # Identifica quem é o vizinho
+                            neighbor = edge[1] if edge[0] == target_entity else edge[0]
+                            
+                            G.add_edge(target_entity, neighbor, weight=weight)
+                            G.add_node(neighbor, size=node_counter[neighbor])
+                
+                if not found_connections:
+                    st.warning(f"A entidade '{target_entity}' não tem conexões com peso >= {min_weight}.")
+
+            # --- VISUALIZAÇÃO ---
             if len(G.nodes) > 0:
                 c1, c2, c3 = st.columns(3)
                 c1.metric("Nós (Entidades)", len(G.nodes))
@@ -253,7 +291,7 @@ if uploaded_file is not None:
                 density = nx.density(G)
                 c3.metric("Densidade", f"{density:.4f}")
                 
-                # Visualização com Plotly
+                # Layout do Grafo
                 pos = nx.spring_layout(G, k=0.5, seed=42)
                 
                 edge_x = []
@@ -278,15 +316,24 @@ if uploaded_file is not None:
                 node_y = []
                 node_text = []
                 node_size = []
+                node_colors = [] # Para colorir diferente o nó central se houver foco
                 
                 for node in G.nodes():
                     x, y = pos[node]
                     node_x.append(x)
                     node_y.append(y)
                     node_text.append(f"{node} (Menções: {G.nodes[node].get('size', 0)})")
-                    # Escala logaritmica ou linear limitada para o tamanho
+                    
+                    # Tamanho
                     sz = G.nodes[node].get('size', 10)
                     node_size.append(min(50, max(10, sz / 5)))
+                    
+                    # Cor (Lógica para destacar o selecionado)
+                    if focus_option != "Visão Geral (Top Conectados)" and node == focus_option:
+                        node_colors.append(1000) # Valor alto para cor diferente
+                    else:
+                        # Cor baseada no grau (conectividade)
+                        node_colors.append(len(list(G.neighbors(node))))
 
                 node_trace = go.Scatter(
                     x=node_x, y=node_y,
@@ -298,25 +345,19 @@ if uploaded_file is not None:
                         showscale=True,
                         colorscale='YlGnBu',
                         reversescale=True,
-                        color=[],
+                        color=node_colors,
                         size=node_size,
                         colorbar=dict(
                             thickness=15,
-                            title='Conectividade (Grau)',
+                            title='Conectividade',
                             xanchor='left',
                         ),
                         line_width=2))
                 
-                # Calcular grau para cor
-                node_adjacencies = []
-                for node, adjacencies in enumerate(G.adjacency()):
-                    node_adjacencies.append(len(adjacencies[1]))
-                node_trace.marker.color = node_adjacencies
-
                 fig_net = go.Figure(data=[edge_trace, node_trace],
                              layout=go.Layout(
                                 title=dict(
-                                    text='Grafo de Interação de Entidades',
+                                    text=f'Rede: {focus_option}',
                                     font=dict(size=16)
                                 ),
                                 showlegend=False,
@@ -330,7 +371,7 @@ if uploaded_file is not None:
                 st.info("Dica: Use zoom no gráfico para explorar clusters específicos.")
 
             else:
-                st.warning("Nenhuma conexão encontrada com os filtros atuais. Tente diminuir o peso mínimo.")
+                st.warning("Nenhuma conexão encontrada com os filtros atuais.")
 
         # ---------------------------------------------------------
         # ABA: EXPLORADOR
