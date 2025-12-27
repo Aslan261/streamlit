@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 
 # --- 1. CONFIGURAÇÃO DA PÁGINA ---
 st.set_page_config(
-    page_title="Painel Otimiza",
+    page_title="Painel",
     page_icon="💲",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -523,3 +523,4 @@ elif pagina == "Comercial":
         margin=dict(t=40, b=40, l=10, r=10)
     )
     st.plotly_chart(fig_evo, use_container_width=True, config={'displayModeBar': False})
+
