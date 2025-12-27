@@ -1,7 +1,6 @@
+streamlit
 pandas
-spacy
 networkx
-matplotlib
+plotly.graph_objects
+plotly.express
 collections
-plotly
-re
