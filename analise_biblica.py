@@ -60,7 +60,7 @@ BIG_ENTITIES = [
     'Daniel', 'Pedro', 'Paulo', 'João', 'Tiago', 'Maria', 'José', 'Abraão', 
     'Isaque', 'Jacó', 'José', 'Judá', 'Pilatos', 'Herodes', 'Judas', 'Timóteo',
     'Barnabé', 'Silas', 'Tito', 'Noé', 'Adão', 'Eva', 'Caim', 'Abel', 'Golias',
-    'Jonas', 'Jó', 'Samuel', 'Absalão', 'Nabucodonosor'
+    'Jonas', 'Jó', 'Samuel', 'Absalão', 'Nabucodonosor', 'Calebe'
 ]
 
 def simple_entity_extractor(text):
