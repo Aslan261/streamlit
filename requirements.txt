@@ -1,0 +1,5 @@
+pandas
+spacy
+networkx
+matplotlib
+collections
