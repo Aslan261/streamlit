@@ -6,10 +6,11 @@ import plotly.express as px
 from collections import Counter
 import re
 
-# Tenta importar a biblioteca do Google Gemini
-# Se o usuário não tiver instalado, o app não quebra, mas avisa na nova aba
+# Tenta importar a nova biblioteca do Google Gen AI
+# Se o usuário não tiver instalado, o app não quebra, mas avisa na aba
 try:
-    import google.generativeai as genai
+    from google import genai
+    from google.genai import types
     HAS_GENAI = True
 except ImportError:
     HAS_GENAI = False
@@ -425,7 +426,7 @@ if uploaded_file is not None:
                 st.markdown(f"**{row['Versiculo']}.** {texto_fmt}")
         
         # ---------------------------------------------------------
-        # ABA: ASSISTENTE DE ESTUDO IA (NOVA)
+        # ABA: ASSISTENTE DE ESTUDO IA (ATUALIZADA)
         # ---------------------------------------------------------
         elif menu == "Assistente de Estudo IA":
             st.header("🤖 Assistente de Estudo Bíblico (IA)")
@@ -436,8 +437,8 @@ if uploaded_file is not None:
             
             # Verificação de dependência
             if not HAS_GENAI:
-                st.error("⚠️ A biblioteca `google-generativeai` não foi encontrada.")
-                st.info("Para usar esta função, instale a biblioteca adicionando `google-generativeai` ao seu arquivo `requirements.txt`.")
+                st.error("⚠️ A biblioteca `google-genai` não foi encontrada.")
+                st.info("Para usar esta função, instale a biblioteca adicionando `google-genai` ao seu arquivo `requirements.txt`.")
                 st.stop()
             
             # Input de API Key (Seguro)
@@ -487,11 +488,13 @@ if uploaded_file is not None:
                     st.error("Texto não encontrado.")
                 else:
                     try:
-                        with st.spinner("A IA está analisando as escrituras..."):
-                            # Configuração do Modelo
-                            genai.configure(api_key=api_key)
-                            # Atualizado de 'gemini-pro' para 'gemini-1.5-flash' (mais recente e estável)
-                            model = genai.GenerativeModel('gemini-1.5-flash')
+                        with st.spinner("A IA está analisando as escrituras (usando Gemini 2.0)..."):
+                            # =========================================================
+                            # ATUALIZAÇÃO PARA GOOGLE-GENAI (V1 SDK)
+                            # =========================================================
+                            
+                            # Inicialização do Cliente
+                            client = genai.Client(api_key=api_key)
                             
                             prompt = f"""
                             Atue como um especialista em teologia bíblica, história e hermenêutica.
@@ -508,7 +511,11 @@ if uploaded_file is not None:
                             Seja profundo mas acessível. Formate a resposta usando Markdown.
                             """
                             
-                            response = model.generate_content(prompt)
+                            # Chamada ao modelo
+                            response = client.models.generate_content(
+                                model='gemini-2.0-flash',
+                                contents=prompt
+                            )
                             
                             st.markdown("---")
                             st.markdown(response.text)
