@@ -4,4 +4,4 @@ networkx
 plotly
 plotly
 openpyxl
-genai
+google.genai
