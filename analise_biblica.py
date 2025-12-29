@@ -490,7 +490,8 @@ if uploaded_file is not None:
                         with st.spinner("A IA está analisando as escrituras..."):
                             # Configuração do Modelo
                             genai.configure(api_key=api_key)
-                            model = genai.GenerativeModel('gemini-pro')
+                            # Atualizado de 'gemini-pro' para 'gemini-1.5-flash' (mais recente e estável)
+                            model = genai.GenerativeModel('gemini-1.5-flash')
                             
                             prompt = f"""
                             Atue como um especialista em teologia bíblica, história e hermenêutica.
