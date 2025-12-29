@@ -6,6 +6,14 @@ import plotly.express as px
 from collections import Counter
 import re
 
+# Tenta importar a biblioteca do Google Gemini
+# Se o usuário não tiver instalado, o app não quebra, mas avisa na nova aba
+try:
+    import google.generativeai as genai
+    HAS_GENAI = True
+except ImportError:
+    HAS_GENAI = False
+
 # Configuração da Página
 st.set_page_config(page_title="Bíblia Analytics", layout="wide")
 
@@ -51,8 +59,8 @@ STOPWORDS_PT = set([
     'aquele', 'aquela', 'aquilo', 'meu', 'teu', 'nosso', 'vosso', 'tua', 
     'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo', 'não',
     'eis', 'quis', 'então', 'amém', 'segunda'
-
 ])
+
 # Lista de principais figuras bíblicas para priorizar na busca
 BIG_ENTITIES = [
     'Deus', 'Jesus', 'Senhor', 'Espírito', 'Moisés', 'Arão', 'Faraó', 'Josué', 
@@ -124,7 +132,13 @@ if uploaded_file is not None:
         st.sidebar.success(f"Dados carregados! {len(df)} versículos.")
         
         # Menu Principal
-        menu = st.sidebar.radio("Navegação", ["Dashboard Geral", "Análise de Entidades", "Redes de Conexão (SNA)", "Explorador de Texto"])
+        menu = st.sidebar.radio("Navegação", [
+            "Dashboard Geral", 
+            "Análise de Entidades", 
+            "Redes de Conexão (SNA)", 
+            "Explorador de Texto",
+            "Assistente de Estudo IA" # Nova Opção
+        ])
         
         # ---------------------------------------------------------
         # ABA: DASHBOARD GERAL
@@ -409,6 +423,98 @@ if uploaded_file is not None:
                     texto_fmt = texto_fmt.replace(ent, f"**{ent}**")
                     
                 st.markdown(f"**{row['Versiculo']}.** {texto_fmt}")
+        
+        # ---------------------------------------------------------
+        # ABA: ASSISTENTE DE ESTUDO IA (NOVA)
+        # ---------------------------------------------------------
+        elif menu == "Assistente de Estudo IA":
+            st.header("🤖 Assistente de Estudo Bíblico (IA)")
+            st.markdown("""
+            Utilize a inteligência artificial para obter insights teológicos, 
+            contexto histórico e aplicações práticas do texto selecionado.
+            """)
+            
+            # Verificação de dependência
+            if not HAS_GENAI:
+                st.error("⚠️ A biblioteca `google-generativeai` não foi encontrada.")
+                st.info("Para usar esta função, instale a biblioteca adicionando `google-generativeai` ao seu arquivo `requirements.txt`.")
+                st.stop()
+            
+            # Input de API Key (Seguro)
+            with st.sidebar:
+                st.markdown("---")
+                st.markdown("### Configuração IA")
+                api_key = st.text_input("Google Gemini API Key", type="password", help="Obtenha sua chave gratuita no Google AI Studio")
+                if not api_key:
+                    st.warning("Insira sua API Key para usar o assistente.")
+
+            # Seleção do Texto
+            c1, c2, c3 = st.columns(3)
+            
+            livro_sel = c1.selectbox("Livro", df['Livro'].unique(), key='ia_livro')
+            
+            caps_disponiveis = df[df['Livro'] == livro_sel]['Capitulo'].unique()
+            cap_sel = c2.selectbox("Capítulo", sorted(caps_disponiveis), key='ia_cap')
+            
+            # Versículos (Opção de "Todos" ou específico)
+            versiculos_disponiveis = df[(df['Livro'] == livro_sel) & (df['Capitulo'] == cap_sel)]['Versiculo'].unique()
+            versiculos_com_todos = ["Todos"] + list(sorted(versiculos_disponiveis))
+            vers_sel = c3.selectbox("Versículo", versiculos_com_todos, key='ia_vers')
+            
+            # Recuperar texto
+            if vers_sel == "Todos":
+                texto_df = df[(df['Livro'] == livro_sel) & (df['Capitulo'] == cap_sel)]
+                texto_completo = " ".join(texto_df['Texto'].astype(str).tolist())
+                referencia = f"{livro_sel} {cap_sel}"
+            else:
+                texto_df = df[(df['Livro'] == livro_sel) & (df['Capitulo'] == cap_sel) & (df['Versiculo'] == vers_sel)]
+                if not texto_df.empty:
+                    texto_completo = texto_df.iloc[0]['Texto']
+                    referencia = f"{livro_sel} {cap_sel}:{vers_sel}"
+                else:
+                    texto_completo = ""
+                    referencia = ""
+
+            # Exibir Texto Selecionado
+            with st.expander("📖 Ler Texto Selecionado", expanded=True):
+                st.info(f"**{referencia}**: {texto_completo}")
+
+            # Botão de Ação
+            if st.button("🔍 Analisar com IA", type="primary"):
+                if not api_key:
+                    st.error("Por favor, insira a API Key na barra lateral.")
+                elif not texto_completo:
+                    st.error("Texto não encontrado.")
+                else:
+                    try:
+                        with st.spinner("A IA está analisando as escrituras..."):
+                            # Configuração do Modelo
+                            genai.configure(api_key=api_key)
+                            model = genai.GenerativeModel('gemini-pro')
+                            
+                            prompt = f"""
+                            Atue como um especialista em teologia bíblica, história e hermenêutica.
+                            Analise o seguinte texto bíblico:
+                            
+                            Referência: {referencia}
+                            Texto: "{texto_completo}"
+                            
+                            Por favor, forneça:
+                            1. **Contexto Histórico e Literário**: O que estava acontecendo na época? Quem escreveu e para quem?
+                            2. **Explicação Teológica**: Qual o significado profundo deste trecho?
+                            3. **Aplicação Prática**: Como aplicar este ensinamento nos dias de hoje?
+                            
+                            Seja profundo mas acessível. Formate a resposta usando Markdown.
+                            """
+                            
+                            response = model.generate_content(prompt)
+                            
+                            st.markdown("---")
+                            st.markdown(response.text)
+                            st.success("Análise concluída!")
+                            
+                    except Exception as e:
+                        st.error(f"Ocorreu um erro ao conectar com a IA: {e}")
 
 else:
     st.info("Por favor, faça o upload do arquivo 'blivre.xlsx' ou CSV na barra lateral para começar.")
