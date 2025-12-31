@@ -5,6 +5,8 @@ import plotly.graph_objects as go
 import plotly.express as px
 from collections import Counter
 import re
+from datetime import datetime
+import math
 
 # Tenta importar a nova biblioteca do Google Gen AI
 # Se o usuário não tiver instalado, o app não quebra, mas avisa na aba
@@ -16,7 +18,7 @@ except ImportError:
     HAS_GENAI = False
 
 # Configuração da Página
-st.set_page_config(page_title="Bíblia Analytics", layout="wide")
+st.set_page_config(page_title="Bíblia Analytics", layout="wide", page_icon="📖")
 
 # =========================================================
 # 1. FUNÇÕES DE CARREGAMENTO E PROCESSAMENTO
@@ -105,12 +107,44 @@ def process_entities(df):
     df['Entidades'] = df['Texto'].apply(simple_entity_extractor)
     return df
 
+@st.cache_data
+def generate_reading_plan(df):
+    """
+    Gera um plano de leitura de 365 dias baseado nos capítulos disponíveis.
+    Divide o total de capítulos por 365.
+    """
+    # Identificar capítulos únicos na ordem correta
+    # Se houver Livro_ID, usa para ordenar. Se não, confia na ordem do CSV.
+    if 'Livro_ID' in df.columns:
+        chapters = df[['Livro_ID', 'Livro', 'Capitulo']].drop_duplicates().sort_values(['Livro_ID', 'Capitulo'])
+    else:
+        chapters = df[['Livro', 'Capitulo']].drop_duplicates()
+        
+    chapters_list = chapters[['Livro', 'Capitulo']].values.tolist()
+    total_chapters = len(chapters_list)
+    
+    # Capítulos por dia (arredondando para cima para garantir que termine)
+    plan = {}
+    
+    # Distribuir capítulos
+    # Usamos np.array_split logic manualmente para garantir distribuição uniforme
+    chunk_size = total_chapters / 365
+    
+    current_idx = 0
+    for day in range(1, 366):
+        end_idx = int(day * chunk_size)
+        daily_chapters = chapters_list[current_idx:end_idx]
+        plan[day] = daily_chapters
+        current_idx = end_idx
+        
+    return plan, total_chapters
+
 # =========================================================
 # 2. INTERFACE E NAVEGAÇÃO
 # =========================================================
 
 st.title("📖 Bíblia Analytics & Network")
-st.markdown("Uma ferramenta para análise exploratória e visualização de redes no texto sagrado.")
+st.markdown("Uma ferramenta para análise exploratória, devocional e visualização de redes no texto sagrado.")
 
 # Sidebar para Upload
 st.sidebar.header("Dados")
@@ -127,24 +161,141 @@ if uploaded_file is not None:
         df.rename(columns=cols_map, inplace=True, errors='ignore')
 
     if df is not None:
-        with st.spinner('Processando entidades e textos...'):
-            df = process_entities(df)
+        with st.spinner('Processando dados...'):
+            if 'Entidades' not in df.columns:
+                df = process_entities(df)
             
         st.sidebar.success(f"Dados carregados! {len(df)} versículos.")
         
         # Menu Principal
         menu = st.sidebar.radio("Navegação", [
+            "Devocional Diário", # Nova primeira opção
             "Dashboard Geral", 
             "Análise de Entidades", 
             "Redes de Conexão (SNA)", 
             "Explorador de Texto",
-            "Assistente de Estudo IA" # Nova Opção
+            "Assistente de Estudo IA"
         ])
         
+        # Input de API Key Global (usado em devocional e assistente)
+        api_key = ""
+        if menu in ["Assistente de Estudo IA", "Devocional Diário"]:
+            if HAS_GENAI:
+                st.sidebar.markdown("---")
+                st.sidebar.markdown("### 🔑 Configuração IA")
+                api_key = st.sidebar.text_input("Google Gemini API Key", type="password", help="Obtenha sua chave gratuita no Google AI Studio")
+
+        # ---------------------------------------------------------
+        # ABA: DEVOCIONAL DIÁRIO (NOVA)
+        # ---------------------------------------------------------
+        if menu == "Devocional Diário":
+            st.header("🙏 Devocional Anual")
+            st.markdown("Acompanhe a leitura da Bíblia em 365 dias.")
+            
+            # Gera plano
+            plan, total_chapters = generate_reading_plan(df)
+            
+            # Controles de Data e Navegação
+            col_date, col_nav = st.columns([1, 2])
+            
+            with col_date:
+                today = datetime.now()
+                selected_date = st.date_input("Selecione a Data", today)
+                # Calcula dia do ano (1 a 365/366)
+                day_of_year = selected_date.timetuple().tm_yday
+                # Ajuste simples para anos bissextos ou limitar a 365
+                if day_of_year > 365: day_of_year = 365
+            
+            # Recupera capítulos do dia
+            todays_chapters = plan.get(day_of_year, [])
+            
+            with col_nav:
+                st.caption(f"Dia {day_of_year} de 365")
+                progress = day_of_year / 365
+                st.progress(progress)
+                if progress == 1.0:
+                    st.success("Parabéns! Você completou o ciclo de leitura.")
+
+            if not todays_chapters:
+                st.info("Nenhuma leitura programada para hoje (ou fim do plano).")
+            else:
+                # Formata título da leitura (ex: Gênesis 1, Gênesis 2)
+                # Agrupa para ficar bonito (ex: Gênesis 1-3)
+                reading_refs = []
+                current_book = ""
+                chapters_nums = []
+                
+                for book, chap in todays_chapters:
+                    if book != current_book:
+                        if current_book:
+                            reading_refs.append(f"{current_book} {min(chapters_nums)}-{max(chapters_nums)}" if len(chapters_nums) > 1 else f"{current_book} {chapters_nums[0]}")
+                        current_book = book
+                        chapters_nums = [chap]
+                    else:
+                        chapters_nums.append(chap)
+                if current_book:
+                     reading_refs.append(f"{current_book} {min(chapters_nums)}-{max(chapters_nums)}" if len(chapters_nums) > 1 else f"{current_book} {chapters_nums[0]}")
+                
+                reading_title = ", ".join(reading_refs)
+                st.subheader(f"Leitura de Hoje: {reading_title}")
+                
+                # Exibir Texto
+                tab_texto, tab_reflexao = st.tabs(["📖 Texto Bíblico", "🤖 Reflexão com IA"])
+                
+                full_text_devocional = ""
+                
+                with tab_texto:
+                    for book, chap in todays_chapters:
+                        st.markdown(f"### {book} {chap}")
+                        subset = df[(df['Livro'] == book) & (df['Capitulo'] == chap)]
+                        text_content = ""
+                        for _, row in subset.iterrows():
+                            vers = row['Versiculo']
+                            txt = row['Texto']
+                            text_content += f"{vers}. {txt} "
+                            st.markdown(f"**{vers}.** {txt}")
+                        full_text_devocional += f"\n\nTexto de {book} {chap}:\n{text_content}"
+                        st.divider()
+                
+                with tab_reflexao:
+                    st.markdown("### Gerar Devocional Personalizado")
+                    st.write("Use a IA para criar uma reflexão curta e uma oração baseada na leitura de hoje.")
+                    
+                    if st.button("✨ Criar Devocional do Dia"):
+                        if not HAS_GENAI:
+                            st.error("Biblioteca Google GenAI não instalada.")
+                        elif not api_key:
+                            st.error("Insira sua API Key na barra lateral.")
+                        else:
+                            try:
+                                with st.spinner("Refletindo sobre a palavra..."):
+                                    client = genai.Client(api_key=api_key)
+                                    prompt_devocional = f"""
+                                    Crie um devocional curto e inspirador baseado na leitura bíblica de hoje: {reading_title}.
+                                    
+                                    O texto lido contém os seguintes trechos:
+                                    {full_text_devocional[:20000]} ... (texto truncado se muito longo)
+                                    
+                                    Estrutura desejada:
+                                    1. **Versículo Chave**: Escolha um versículo impactante dessa leitura.
+                                    2. **Reflexão**: Um parágrafo profundo mas aplicável sobre o tema.
+                                    3. **Aplicação**: Uma ação prática para hoje.
+                                    4. **Oração**: Uma oração curta de encerramento.
+                                    """
+                                    
+                                    response = client.models.generate_content(
+                                        model='gemini-2.0-flash',
+                                        contents=prompt_devocional
+                                    )
+                                    
+                                    st.markdown(response.text)
+                            except Exception as e:
+                                st.error(f"Erro ao gerar devocional: {e}")
+
         # ---------------------------------------------------------
         # ABA: DASHBOARD GERAL
         # ---------------------------------------------------------
-        if menu == "Dashboard Geral":
+        elif menu == "Dashboard Geral":
             st.header("Visão Macro")
             
             c1, c2, c3, c4 = st.columns(4)
@@ -441,13 +592,8 @@ if uploaded_file is not None:
                 st.info("Para usar esta função, instale a biblioteca adicionando `google-genai` ao seu arquivo `requirements.txt`.")
                 st.stop()
             
-            # Input de API Key (Seguro)
-            with st.sidebar:
-                st.markdown("---")
-                st.markdown("### Configuração IA")
-                api_key = st.text_input("Google Gemini API Key", type="password", help="Obtenha sua chave gratuita no Google AI Studio")
-                if not api_key:
-                    st.warning("Insira sua API Key para usar o assistente.")
+            if not api_key:
+                st.warning("Insira sua API Key na barra lateral para usar o assistente.")
 
             # Seleção do Texto
             c1, c2, c3 = st.columns(3)
@@ -513,7 +659,7 @@ if uploaded_file is not None:
                             
                             # Chamada ao modelo
                             response = client.models.generate_content(
-                                model='gemini-2.5-flash-lite',
+                                model='gemini-2.0-flash',
                                 contents=prompt
                             )
                             
