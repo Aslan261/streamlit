@@ -143,10 +143,15 @@ st.markdown("""
     }
 
     /* TABELAS */
+    /* Remove fundo branco do dataframe container para ficar transparente na aba entidades se desejado,
+       ou mantem branco apenas na tabela interna */
     [data-testid="stDataFrame"] {
-        background-color: white;
-        padding: 10px;
+        background-color: transparent !important; 
+    }
+    [data-testid="stDataFrame"] > div {
+        background-color: white; /* Mantem a tabela legivel */
         border-radius: 10px;
+        padding: 5px;
     }
 
     /* EXPANSORES */
@@ -327,11 +332,11 @@ if uploaded_file is not None:
             
             plan, total_chapters = generate_reading_plan(df)
             
-            # Removed the white background div wrapper as requested
             col_date, col_nav = st.columns([1, 2])
             with col_date:
                 today = datetime.now()
-                selected_date = st.date_input("Selecione a Data", today)
+                # Alteração: formato da data para DD/MM/YYYY
+                selected_date = st.date_input("Selecione a Data", today, format="DD/MM/YYYY")
                 day_of_year = selected_date.timetuple().tm_yday
                 if day_of_year > 365: day_of_year = 365
             
@@ -363,13 +368,11 @@ if uploaded_file is not None:
                         subset = df[(df['Livro'] == book) & (df['Capitulo'] == chap)]
                         text_content = ""
                         
-                        # Removido expander, texto direto e quebrado por linha
                         html_text = ""
                         for _, row in subset.iterrows():
                             vers = row['Versiculo']
                             txt = row['Texto']
                             text_content += f"{vers}. {txt} "
-                            # Quebra de linha para facilitar leitura
                             html_text += f"<div style='margin-bottom: 8px;'><span style='color:#833500; font-weight:bold;'>{vers}.</span> <span style='color:#353535;'>{txt}</span></div>"
                         
                         st.markdown(html_text, unsafe_allow_html=True)
@@ -413,7 +416,6 @@ if uploaded_file is not None:
         elif menu == "📊 Visão Geral":
             st.title("Visão Macro")
             
-            # Espaço para descer os KPIs
             st.markdown("<br>", unsafe_allow_html=True)
             
             c1, c2, c3, c4 = st.columns(4)
@@ -436,7 +438,6 @@ if uploaded_file is not None:
                 color='Contagem', color_continuous_scale=['#1e295a', '#F18F01']
             )
             
-            # Removemos eixo Y e labels conforme pedido
             fig.update_traces(marker_line_width=0)
             fig.update_layout(
                 paper_bgcolor='rgba(255,255,255,0.9)', 
@@ -460,43 +461,10 @@ if uploaded_file is not None:
             entity_counts = Counter(all_entities).most_common(50)
             df_ent = pd.DataFrame(entity_counts, columns=['Entidade', 'Frequência'])
             
-            # Nova disposição Visual - Tabela e Gráfico Lado a Lado
-            c1, c2 = st.columns([1, 2])
-            
-            with c1:
-                st.markdown("### Tabela de Frequência")
-                st.dataframe(df_ent, height=600, use_container_width=True)
-            
-            with c2:
-                st.markdown("### Frequência Global (Top 20)")
-                # Gráfico de barras legível e horizontal
-                fig_bar = px.bar(
-                    df_ent.head(20).sort_values('Frequência', ascending=True), 
-                    x='Frequência', 
-                    y='Entidade', 
-                    orientation='h', 
-                    text='Frequência',
-                    color='Frequência',
-                    color_continuous_scale='Viridis'
-                )
-                
-                fig_bar.update_traces(
-                    texttemplate='%{text}', 
-                    textposition='outside',
-                    marker_line_color='rgb(8,48,107)', 
-                    marker_line_width=1.5
-                )
-                
-                fig_bar.update_layout(
-                    xaxis_title="Número de Menções",
-                    yaxis_title=None,
-                    plot_bgcolor='rgba(0,0,0,0)',
-                    paper_bgcolor='rgba(0,0,0,0)',
-                    font=dict(color='#1e295a', size=12),
-                    height=600,
-                    margin=dict(l=10, r=50, t=30, b=30)
-                )
-                st.plotly_chart(fig_bar, use_container_width=True)
+            # Tabela de Frequência - largura total, sem colunas
+            st.markdown("### Tabela de Frequência (Top 50)")
+            # Fundo transparente aplicado via CSS, aqui apenas chamamos o df
+            st.dataframe(df_ent, height=600, use_container_width=True)
             
             st.divider()
             st.subheader("Rastreamento de Entidade (Modo Escuro)")
@@ -508,28 +476,25 @@ if uploaded_file is not None:
                 mask = df['Entidades'].apply(lambda x: selected_entity in x)
                 df_filtered = df[mask].copy()
                 
-                # Ordenação para plotagem correta
                 if 'ID_Global' in df_filtered.columns:
                     df_filtered = df_filtered.sort_values('ID_Global')
                 else:
                     df_filtered = df_filtered.sort_index()
                 
-                # Ordem dos livros para o Eixo Y
                 book_order = []
                 if 'Livro_ID' in df.columns:
                     book_order = df[['Livro', 'Livro_ID']].drop_duplicates().sort_values('Livro_ID')['Livro'].tolist()
                 else:
                     book_order = df['Livro'].unique().tolist()
 
-                # Gráfico com fundo PRETO e PONTOS COLORIDOS POR LIVRO
                 fig_timeline = px.scatter(
                     df_filtered, 
                     x='ID_Global' if 'ID_Global' in df.columns else df_filtered.index, 
                     y='Livro', 
-                    color='Livro', # Cada livro uma cor
+                    color='Livro',
                     hover_data=['Capitulo', 'Versiculo', 'Texto'],
                     title=f"Dispersão de '{selected_entity}' nas Escrituras",
-                    category_orders={"Livro": book_order} # Força ordem bíblica no eixo Y
+                    category_orders={"Livro": book_order}
                 )
                 
                 fig_timeline.update_traces(
@@ -574,12 +539,17 @@ if uploaded_file is not None:
                             edge_counter[edge] += 1
             
             with st.container():
-                c_filter_1, c_filter_2 = st.columns(2)
+                c_filter_1, c_filter_2, c_filter_3 = st.columns(3)
                 with c_filter_1:
                     min_weight = st.slider("Força da Conexão (Peso Mínimo)", 1, 50, 5)
+                
                 all_available_nodes = sorted([k for k, v in node_counter.items() if v > 1])
                 with c_filter_2:
                     focus_option = st.selectbox("Focar em:", ["Visão Geral (Top Conectados)"] + all_available_nodes)
+                
+                # Nova Funcionalidade: Layout do Grafo
+                with c_filter_3:
+                    layout_opt = st.selectbox("Layout do Grafo", ["Spring (Padrão)", "Circular", "Aleatório", "Kamada-Kawai", "Shell"])
 
             max_nodes = 50
             if focus_option == "Visão Geral (Top Conectados)":
@@ -610,14 +580,28 @@ if uploaded_file is not None:
                     st.warning(f"Sem conexões fortes para {target_entity} com peso >= {min_weight}.")
 
             if len(G.nodes) > 0:
-                pos = nx.spring_layout(G, k=0.6, seed=42)
+                # Aplicação da escolha de Layout
+                if layout_opt == "Spring (Padrão)":
+                    pos = nx.spring_layout(G, k=0.6, seed=42)
+                elif layout_opt == "Circular":
+                    pos = nx.circular_layout(G)
+                elif layout_opt == "Aleatório":
+                    pos = nx.random_layout(G, seed=42)
+                elif layout_opt == "Kamada-Kawai":
+                    pos = nx.kamada_kawai_layout(G)
+                elif layout_opt == "Shell":
+                    pos = nx.shell_layout(G)
+                else:
+                    pos = nx.spring_layout(G, k=0.6, seed=42)
+
                 edge_x = []
                 edge_y = []
                 for edge in G.edges():
-                    x0, y0 = pos[edge[0]]
-                    x1, y1 = pos[edge[1]]
-                    edge_x.append(x0); edge_x.append(x1); edge_x.append(None)
-                    edge_y.append(y0); edge_y.append(y1); edge_y.append(None)
+                    if edge[0] in pos and edge[1] in pos:
+                        x0, y0 = pos[edge[0]]
+                        x1, y1 = pos[edge[1]]
+                        edge_x.append(x0); edge_x.append(x1); edge_x.append(None)
+                        edge_y.append(y0); edge_y.append(y1); edge_y.append(None)
 
                 edge_trace = go.Scatter(
                     x=edge_x, y=edge_y,
@@ -626,28 +610,28 @@ if uploaded_file is not None:
 
                 node_x = []
                 node_y = []
-                node_text = [] # Lista corrigida para hover
+                node_text = [] 
                 node_size = []
                 node_colors = []
                 
                 for node in G.nodes():
-                    x, y = pos[node]
-                    node_x.append(x)
-                    node_y.append(y)
-                    # Corrigido: Texto específico para cada nó
-                    node_text.append(f"{node} (Menções: {G.nodes[node].get('size', 0)})")
-                    sz = G.nodes[node].get('size', 10)
-                    node_size.append(min(60, max(15, sz / 4)))
-                    if focus_option != "Visão Geral (Top Conectados)" and node == focus_option:
-                        node_colors.append(1000)
-                    else:
-                        node_colors.append(len(list(G.neighbors(node))))
+                    if node in pos:
+                        x, y = pos[node]
+                        node_x.append(x)
+                        node_y.append(y)
+                        node_text.append(f"{node} (Menções: {G.nodes[node].get('size', 0)})")
+                        sz = G.nodes[node].get('size', 10)
+                        node_size.append(min(60, max(15, sz / 4)))
+                        if focus_option != "Visão Geral (Top Conectados)" and node == focus_option:
+                            node_colors.append(1000)
+                        else:
+                            node_colors.append(len(list(G.neighbors(node))))
 
                 node_trace = go.Scatter(
                     x=node_x, y=node_y,
                     mode='markers+text',
                     hoverinfo='text',
-                    text=node_text, # Usando a lista correta
+                    text=node_text,
                     textposition="top center",
                     textfont=dict(color='#1e295a', size=10),
                     marker=dict(
@@ -692,14 +676,12 @@ if uploaded_file is not None:
             
             st.markdown(f"### {livro_sel} {cap_sel}")
             
-            # Texto quebrado por linha para facilitar leitura
             texto_html = "<div style='background-color: white; padding: 20px; border-radius: 10px; border-left: 5px solid #F18F01; box-shadow: 2px 2px 10px rgba(0,0,0,0.05);'>"
             for _, row in texto_capitulo.iterrows():
                 v = row['Versiculo']
                 t = row['Texto']
                 for ent in row['Entidades']:
                     t = t.replace(ent, f"<b style='color:#833500'>{ent}</b>")
-                # Div por versículo para forçar quebra
                 texto_html += f"<div style='margin-bottom: 5px;'><sup style='color:#1e295a; font-weight:bold; margin-right: 5px;'>{v}</sup> {t}</div>"
             texto_html += "</div>"
             
@@ -715,7 +697,6 @@ if uploaded_file is not None:
                 st.error("Biblioteca Google GenAI ausente.")
                 st.stop()
             
-            # Alerta azul claro personalizado
             if not api_key:
                 st.markdown("""
                 <div class="custom-info">
@@ -771,7 +752,6 @@ if uploaded_file is not None:
                         st.error(f"Erro: {e}")
 
 else:
-    # Tela de Boas Vindas
     st.markdown("""
     <div style='text-align: center; padding: 50px;'>
         <h1 style='color: #1e295a;'>Bem-vindo ao seu caminho com Deus</h1>
