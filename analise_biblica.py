@@ -460,23 +460,43 @@ if uploaded_file is not None:
             entity_counts = Counter(all_entities).most_common(50)
             df_ent = pd.DataFrame(entity_counts, columns=['Entidade', 'Frequência'])
             
-            # Nova disposição Visual
-            col_metrics, col_chart = st.columns([1, 2])
-            with col_metrics:
-                st.markdown("#### 🔝 Top 3 Mais Citados")
-                if len(df_ent) >= 3:
-                    st.metric("1º Lugar", df_ent.iloc[0]['Entidade'], f"{df_ent.iloc[0]['Frequência']} menções")
-                    st.metric("2º Lugar", df_ent.iloc[1]['Entidade'], f"{df_ent.iloc[1]['Frequência']} menções")
-                    st.metric("3º Lugar", df_ent.iloc[2]['Entidade'], f"{df_ent.iloc[2]['Frequência']} menções")
+            # Nova disposição Visual - Tabela e Gráfico Lado a Lado
+            c1, c2 = st.columns([1, 2])
+            
+            with c1:
+                st.markdown("### Tabela de Frequência")
+                st.dataframe(df_ent, height=600, use_container_width=True)
+            
+            with c2:
+                st.markdown("### Frequência Global (Top 20)")
+                # Gráfico de barras legível e horizontal
+                fig_bar = px.bar(
+                    df_ent.head(20).sort_values('Frequência', ascending=True), 
+                    x='Frequência', 
+                    y='Entidade', 
+                    orientation='h', 
+                    text='Frequência',
+                    color='Frequência',
+                    color_continuous_scale='Viridis'
+                )
                 
-                with st.expander("Ver tabela completa"):
-                    st.dataframe(df_ent, use_container_width=True)
-
-            with col_chart:
-                st.markdown("#### 📊 Frequência Global")
-                fig = px.bar(df_ent.head(15), x='Frequência', y='Entidade', orientation='h', color='Frequência', color_continuous_scale='Oranges')
-                fig.update_layout(yaxis={'categoryorder':'total ascending'}, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_color='#1e295a')
-                st.plotly_chart(fig, use_container_width=True)
+                fig_bar.update_traces(
+                    texttemplate='%{text}', 
+                    textposition='outside',
+                    marker_line_color='rgb(8,48,107)', 
+                    marker_line_width=1.5
+                )
+                
+                fig_bar.update_layout(
+                    xaxis_title="Número de Menções",
+                    yaxis_title=None,
+                    plot_bgcolor='rgba(0,0,0,0)',
+                    paper_bgcolor='rgba(0,0,0,0)',
+                    font=dict(color='#1e295a', size=12),
+                    height=600,
+                    margin=dict(l=10, r=50, t=30, b=30)
+                )
+                st.plotly_chart(fig_bar, use_container_width=True)
             
             st.divider()
             st.subheader("Rastreamento de Entidade (Modo Escuro)")
@@ -487,19 +507,33 @@ if uploaded_file is not None:
             if selected_entity:
                 mask = df['Entidades'].apply(lambda x: selected_entity in x)
                 df_filtered = df[mask].copy()
-                df_filtered['Posicao_Global'] = df_filtered.index
                 
-                # Gráfico com fundo PRETO conforme solicitado
+                # Ordenação para plotagem correta
+                if 'ID_Global' in df_filtered.columns:
+                    df_filtered = df_filtered.sort_values('ID_Global')
+                else:
+                    df_filtered = df_filtered.sort_index()
+                
+                # Ordem dos livros para o Eixo Y
+                book_order = []
+                if 'Livro_ID' in df.columns:
+                    book_order = df[['Livro', 'Livro_ID']].drop_duplicates().sort_values('Livro_ID')['Livro'].tolist()
+                else:
+                    book_order = df['Livro'].unique().tolist()
+
+                # Gráfico com fundo PRETO e PONTOS COLORIDOS POR LIVRO
                 fig_timeline = px.scatter(
                     df_filtered, 
                     x='ID_Global' if 'ID_Global' in df.columns else df_filtered.index, 
                     y='Livro', 
+                    color='Livro', # Cada livro uma cor
                     hover_data=['Capitulo', 'Versiculo', 'Texto'],
                     title=f"Dispersão de '{selected_entity}' nas Escrituras",
+                    category_orders={"Livro": book_order} # Força ordem bíblica no eixo Y
                 )
                 
                 fig_timeline.update_traces(
-                    marker=dict(color='#00ffff', size=6, opacity=0.8, symbol='circle'), # Ciano neon para contraste
+                    marker=dict(size=8, opacity=0.9, symbol='circle'),
                     mode='markers'
                 )
                 
@@ -508,11 +542,18 @@ if uploaded_file is not None:
                     plot_bgcolor='black',
                     font_color='white',
                     title_font_color='white',
-                    xaxis=dict(showgrid=False, title="Progresso na Bíblia", color='white'),
+                    xaxis=dict(showgrid=False, title="Progresso na Bíblia", color='white', showticklabels=False),
                     yaxis=dict(showgrid=True, gridcolor='#333', color='white'),
+                    legend=dict(
+                        bgcolor='rgba(0,0,0,0.5)',
+                        font=dict(color='white')
+                    ),
                     height=600
                 )
                 st.plotly_chart(fig_timeline, use_container_width=True)
+                
+                with st.expander(f"Ver versículos citados ({len(df_filtered)})"):
+                    st.dataframe(df_filtered[['Livro', 'Capitulo', 'Versiculo', 'Texto']], use_container_width=True)
 
         # ---------------------------------------------------------
         # REDES (SNA)
