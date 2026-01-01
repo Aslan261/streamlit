@@ -7,6 +7,7 @@ from collections import Counter
 import re
 from datetime import datetime
 import math
+import random  # Importado para gerar a aleatoriedade do plano
 
 # Tenta importar a nova biblioteca do Google Gen AI
 # Se o usuário não tiver instalado, o app não quebra, mas avisa na aba
@@ -110,12 +111,13 @@ def process_entities(df):
 @st.cache_data
 def generate_reading_plan(df):
     """
-    Gera um plano de leitura de 365 dias baseado nos capítulos disponíveis.
-    Divide o total de capítulos por 365.
+    Gera um plano de leitura de 365 dias com capítulos aleatórios.
+    Divide o total de capítulos por 365 e embaralha a ordem de forma determinística.
     """
-    # Identificar capítulos únicos na ordem correta
-    # Se houver Livro_ID, usa para ordenar. Se não, confia na ordem do CSV.
+    # Identificar capítulos únicos
+    # Usamos drop_duplicates para pegar a lista única de (Livro, Capitulo)
     if 'Livro_ID' in df.columns:
+        # Ordenamos inicialmente para ter uma base consistente
         chapters = df[['Livro_ID', 'Livro', 'Capitulo']].drop_duplicates().sort_values(['Livro_ID', 'Capitulo'])
     else:
         chapters = df[['Livro', 'Capitulo']].drop_duplicates()
@@ -123,17 +125,23 @@ def generate_reading_plan(df):
     chapters_list = chapters[['Livro', 'Capitulo']].values.tolist()
     total_chapters = len(chapters_list)
     
-    # Capítulos por dia (arredondando para cima para garantir que termine)
-    plan = {}
+    # --- LÓGICA DE ALEATORIEDADE ---
+    # Usamos seed(42) para garantir que o plano seja o mesmo para todos os usuários
+    # e não mude toda vez que a página recarregar. O dia 1 será sempre o mesmo "random".
+    random.seed(42)
+    random.shuffle(chapters_list)
     
-    # Distribuir capítulos
-    # Usamos np.array_split logic manualmente para garantir distribuição uniforme
+    # Capítulos por dia (distribuição proporcional)
+    plan = {}
     chunk_size = total_chapters / 365
     
     current_idx = 0
     for day in range(1, 366):
         end_idx = int(day * chunk_size)
         daily_chapters = chapters_list[current_idx:end_idx]
+        
+        # Como os capítulos são aleatórios, podemos ter livros misturados.
+        # Não reordenamos daily_chapters para manter a aleatoriedade pura proposta.
         plan[day] = daily_chapters
         current_idx = end_idx
         
@@ -189,8 +197,8 @@ if uploaded_file is not None:
         # ABA: DEVOCIONAL DIÁRIO (NOVA)
         # ---------------------------------------------------------
         if menu == "Devocional Diário":
-            st.header("🙏 Devocional Anual")
-            st.markdown("Acompanhe a leitura da Bíblia em 365 dias.")
+            st.header("🙏 Devocional Anual (Aleatório)")
+            st.markdown("Acompanhe a leitura da Bíblia em 365 dias com passagens selecionadas aleatoriamente.")
             
             # Gera plano
             plan, total_chapters = generate_reading_plan(df)
@@ -219,24 +227,17 @@ if uploaded_file is not None:
             if not todays_chapters:
                 st.info("Nenhuma leitura programada para hoje (ou fim do plano).")
             else:
-                # Formata título da leitura (ex: Gênesis 1, Gênesis 2)
-                # Agrupa para ficar bonito (ex: Gênesis 1-3)
+                # Formata título da leitura
                 reading_refs = []
-                current_book = ""
-                chapters_nums = []
-                
                 for book, chap in todays_chapters:
-                    if book != current_book:
-                        if current_book:
-                            reading_refs.append(f"{current_book} {min(chapters_nums)}-{max(chapters_nums)}" if len(chapters_nums) > 1 else f"{current_book} {chapters_nums[0]}")
-                        current_book = book
-                        chapters_nums = [chap]
-                    else:
-                        chapters_nums.append(chap)
-                if current_book:
-                     reading_refs.append(f"{current_book} {min(chapters_nums)}-{max(chapters_nums)}" if len(chapters_nums) > 1 else f"{current_book} {chapters_nums[0]}")
+                    reading_refs.append(f"{book} {chap}")
                 
-                reading_title = ", ".join(reading_refs)
+                # Exibe de forma resumida se houver muitos
+                if len(reading_refs) > 3:
+                    reading_title = ", ".join(reading_refs[:3]) + f" e mais {len(reading_refs)-3}"
+                else:
+                    reading_title = ", ".join(reading_refs)
+                
                 st.subheader(f"Leitura de Hoje: {reading_title}")
                 
                 # Exibir Texto
@@ -271,10 +272,12 @@ if uploaded_file is not None:
                                 with st.spinner("Refletindo sobre a palavra..."):
                                     client = genai.Client(api_key=api_key)
                                     prompt_devocional = f"""
-                                    Crie um devocional curto e inspirador baseado na leitura bíblica de hoje: {reading_title}.
+                                    Crie um devocional curto e inspirador baseado na leitura bíblica de hoje que contém passagens variadas: {reading_title}.
                                     
                                     O texto lido contém os seguintes trechos:
                                     {full_text_devocional[:20000]} ... (texto truncado se muito longo)
+                                    
+                                    Como as passagens são aleatórias, tente encontrar um fio condutor ou tema comum, ou foque na passagem mais impactante.
                                     
                                     Estrutura desejada:
                                     1. **Versículo Chave**: Escolha um versículo impactante dessa leitura.
