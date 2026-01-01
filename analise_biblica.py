@@ -23,7 +23,7 @@ st.set_page_config(page_title="A Bíblia é o seu caminho", layout="wide", page_
 # =========================================================
 # 0. ESTILIZAÇÃO (CSS PERSONALIZADO)
 # =========================================================
-# Aplicando a paleta de cores solicitada
+# Aplicando a paleta de cores solicitada e ajustes finos de UI
 st.markdown("""
 <style>
     /* VARIÁVEIS DE COR */
@@ -50,7 +50,10 @@ st.markdown("""
     [data-testid="stSidebar"] {
         background-color: var(--primary-100);
     }
-    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3, [data-testid="stSidebar"] label {
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: var(--bg-100) !important;
+    }
+    [data-testid="stSidebar"] label {
         color: var(--bg-100) !important;
     }
     [data-testid="stSidebar"] .stMarkdown p {
@@ -62,7 +65,6 @@ st.markdown("""
     }
     
     /* RADIO BUTTONS (MENU) */
-    /* Estilizando a seleção do menu para parecer 'ativo' */
     div.row-widget.stRadio > div[role="radiogroup"] > label {
         background-color: transparent;
         color: var(--primary-300);
@@ -75,11 +77,9 @@ st.markdown("""
         background-color: var(--primary-200);
         color: white;
     }
-    /* Quando selecionado (Infelizmente o Streamlit não expõe classe fácil para 'checked' no CSS puro, 
-       mas o estilo padrão do Streamlit já destaca. Vamos focar em tipografia) */
 
-    /* CABEÇALHOS */
-    h1, h2, h3 {
+    /* CABEÇALHOS GERAIS */
+    h1, h2, h3, h4, h5, h6 {
         color: var(--primary-100) !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
         font-weight: 700;
@@ -88,6 +88,28 @@ st.markdown("""
         border-bottom: 2px solid var(--accent-100);
         padding-bottom: 10px;
         margin-bottom: 20px;
+    }
+    
+    /* LABELS DE INPUTS (Geral para todas as abas) */
+    .stDateInput label, .stTextInput label, .stSelectbox label, .stSlider label, .stNumberInput label {
+        color: var(--primary-100) !important;
+        font-weight: 600 !important;
+        font-size: 1rem !important;
+    }
+
+    /* DATA INPUT & CAMPOS DE TEXTO - FUNDO CLARO */
+    div[data-baseweb="input"] {
+        background-color: white !important;
+        border: 1px solid var(--bg-300);
+        color: var(--text-100);
+    }
+    input {
+        color: var(--text-100) !important;
+    }
+
+    /* BARRA DE PROGRESSO */
+    .stProgress > div > div > div > div {
+        background-color: var(--accent-100) !important;
     }
     
     /* CARDS DE MÉTRICAS */
@@ -121,18 +143,6 @@ st.markdown("""
         border: none;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
-    .stButton > button:focus {
-        border-color: var(--accent-200);
-        color: white;
-    }
-
-    /* INPUTS E SELECTBOXES */
-    .stTextInput > div > div > input, .stSelectbox > div > div > div {
-        background-color: white;
-        color: var(--text-100);
-        border-radius: 5px;
-        border: 1px solid var(--bg-300);
-    }
 
     /* TABELAS (DATAFRAME) */
     [data-testid="stDataFrame"] {
@@ -141,19 +151,30 @@ st.markdown("""
         border-radius: 10px;
     }
 
-    /* EXPANSORES E TABS */
+    /* EXPANSORES (Devocional) */
     .stExpander {
         background-color: white;
         border-radius: 10px;
         border: 1px solid var(--bg-300);
     }
+    .streamlit-expanderHeader p {
+        color: var(--accent-100) !important;
+        font-weight: bold !important;
+        font-size: 1.1rem !important;
+    }
+
+    /* ABAS (TABS) - AUMENTADAS E EVIDENTES */
     .stTabs [data-baseweb="tab-list"] {
-        gap: 10px;
+        gap: 8px;
     }
     .stTabs [data-baseweb="tab"] {
         background-color: var(--bg-200);
-        border-radius: 5px 5px 0 0;
-        color: var(--text-100);
+        border-radius: 8px 8px 0 0;
+        color: var(--text-200);
+        font-size: 1.1rem !important; /* Aumentado */
+        font-weight: bold;
+        padding: 10px 20px;
+        border: none;
     }
     .stTabs [aria-selected="true"] {
         background-color: var(--primary-100) !important;
@@ -263,21 +284,30 @@ def generate_reading_plan(df):
     return plan, total_chapters
 
 # Função auxiliar para aplicar tema aos gráficos Plotly
-def apply_theme_to_plot(fig):
+def apply_theme_to_plot(fig, transparent=True, dark_text=False):
+    # Configuração de fundo e fonte
+    paper_color = 'rgba(0,0,0,0)' if transparent else 'white'
+    plot_color = 'rgba(255,255,255,0.7)' if transparent else 'white'
+    text_color = '#353535' if dark_text else '#353535'
+    
     fig.update_layout(
-        paper_bgcolor='rgba(0,0,0,0)', # Transparente para usar o fundo do app
-        plot_bgcolor='rgba(255,255,255,0.5)', # Fundo do gráfico semi-transparente
-        font_color='#353535',
+        paper_bgcolor=paper_color,
+        plot_bgcolor=plot_color,
+        font_color=text_color,
         title_font_color='#1e295a',
-        colorway=['#1e295a', '#F18F01', '#4c5187', '#abacea', '#833500'], # Cores do tema nas séries
+        colorway=['#1e295a', '#F18F01', '#4c5187', '#abacea', '#833500'],
     )
     return fig
+
+# Helper para formatar números (milhar com ponto)
+def fmt_num(num):
+    return f"{num:,.0f}".replace(",", ".")
 
 # =========================================================
 # 2. INTERFACE E NAVEGAÇÃO
 # =========================================================
 
-# Sidebar customizada com emojis e estilo
+# Sidebar customizada
 st.sidebar.markdown("# ✝️ Seu Aplicativo Bíblico")
 st.sidebar.markdown("---")
 
@@ -297,10 +327,10 @@ if uploaded_file is not None:
             if 'Entidades' not in df.columns:
                 df = process_entities(df)
             
-        st.sidebar.success(f"Carregado: {len(df)} versículos")
+        st.sidebar.success(f"Carregado: {fmt_num(len(df))} versículos")
         st.sidebar.markdown("---")
         
-        # Menu Principal com ícones para visual mais interessante
+        # Menu Principal
         menu = st.sidebar.radio("Navegação", [
             "🙏 Devocional Diário",
             "📊 Visão Geral", 
@@ -328,21 +358,21 @@ if uploaded_file is not None:
             
             plan, total_chapters = generate_reading_plan(df)
             
-            # Card de controle com cor de fundo branca para destaque
-            with st.container():
-                col_date, col_nav = st.columns([1, 2])
-                with col_date:
-                    today = datetime.now()
-                    selected_date = st.date_input("📅 Selecione a Data", today)
-                    day_of_year = selected_date.timetuple().tm_yday
-                    if day_of_year > 365: day_of_year = 365
-                
-                with col_nav:
-                    st.markdown(f"**Progresso do Ano (Dia {day_of_year}/365)**")
-                    progress = day_of_year / 365
-                    st.progress(progress)
+            # Container estilizado para controles
+            st.markdown('<div style="background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #c2baa6; margin-bottom: 20px;">', unsafe_allow_html=True)
+            col_date, col_nav = st.columns([1, 2])
+            with col_date:
+                today = datetime.now()
+                # O label já está ajustado pelo CSS global para cor do tema
+                selected_date = st.date_input("Selecione a Data", today)
+                day_of_year = selected_date.timetuple().tm_yday
+                if day_of_year > 365: day_of_year = 365
             
-            st.divider()
+            with col_nav:
+                st.markdown(f"<p style='color:#1e295a; font-weight:bold; margin-bottom:0px;'>Progresso do Ano (Dia {day_of_year}/365)</p>", unsafe_allow_html=True)
+                progress = day_of_year / 365
+                st.progress(progress)
+            st.markdown('</div>', unsafe_allow_html=True)
 
             todays_chapters = plan.get(day_of_year, [])
 
@@ -360,23 +390,31 @@ if uploaded_file is not None:
                 
                 st.subheader(f"📖 Leitura de Hoje: {reading_title}")
                 
-                tab_texto, tab_reflexao = st.tabs(["Texto Bíblico", "Reflexão IA"])
+                # Abas estilizadas e aumentadas via CSS
+                tab_texto, tab_reflexao = st.tabs(["Texto Bíblico", "Reflexão com IA"])
                 
                 full_text_devocional = ""
                 
                 with tab_texto:
                     for book, chap in todays_chapters:
+                        # Título da seção
                         st.markdown(f"#### {book} {chap}")
                         subset = df[(df['Livro'] == book) & (df['Capitulo'] == chap)]
                         text_content = ""
-                        # Usando expander para não poluir se for muito longo
-                        with st.expander(f"Ler {book} {chap}", expanded=True):
+                        
+                        # Expander com header em laranja (via CSS)
+                        with st.expander(f"Ler texto de {book} {chap}", expanded=True):
+                            # Montando HTML para melhor controle visual
+                            html_text = ""
                             for _, row in subset.iterrows():
                                 vers = row['Versiculo']
                                 txt = row['Texto']
                                 text_content += f"{vers}. {txt} "
-                                st.markdown(f"<small><b>{vers}.</b> {txt}</small>", unsafe_allow_html=True)
+                                html_text += f"<span style='color:#833500; font-weight:bold; font-size:0.8em; vertical-align:super;'>{vers}</span> <span style='color:#353535;'>{txt}</span> "
+                            st.markdown(f"<div style='line-height: 1.6;'>{html_text}</div>", unsafe_allow_html=True)
+                            
                         full_text_devocional += f"\n\nTexto de {book} {chap}:\n{text_content}"
+                        st.markdown("<br>", unsafe_allow_html=True)
                 
                 with tab_reflexao:
                     col_ia_1, col_ia_2 = st.columns([1, 3])
@@ -407,8 +445,13 @@ if uploaded_file is not None:
                                     st.error(f"Erro: {e}")
                     
                     with col_ia_2:
+                        # Área de resultado com estilo de card
                         if 'devocional_result' in st.session_state:
-                            st.markdown(st.session_state['devocional_result'])
+                            st.markdown(f"""
+                            <div style="background-color: white; padding: 30px; border-radius: 10px; border-left: 5px solid #F18F01; box-shadow: 2px 2px 15px rgba(0,0,0,0.05);">
+                                {st.session_state['devocional_result']}
+                            </div>
+                            """, unsafe_allow_html=True)
                         else:
                             st.info("Clique no botão ao lado para gerar uma reflexão exclusiva para hoje.")
 
@@ -418,15 +461,18 @@ if uploaded_file is not None:
         elif menu == "📊 Visão Geral":
             st.title("Visão Macro")
             
+            # Métricas formatadas
             c1, c2, c3, c4 = st.columns(4)
-            c1.metric("Livros", df['Livro'].nunique())
-            c2.metric("Capítulos", df.groupby(['Livro', 'Capitulo']).ngroups)
-            c3.metric("Versículos", len(df))
+            c1.metric("Livros", fmt_num(df['Livro'].nunique()))
+            c2.metric("Capítulos", fmt_num(df.groupby(['Livro', 'Capitulo']).ngroups))
+            c3.metric("Versículos", fmt_num(len(df)))
             
             total_words = df['Texto'].astype(str).apply(lambda x: len(x.split())).sum()
-            c4.metric("Palavras (aprox.)", f"{total_words:,.0f}".replace(",", "."))
+            c4.metric("Palavras (aprox.)", fmt_num(total_words))
             
             st.markdown("### Distribuição de Conteúdo")
+            
+            # Preparação dos dados
             verse_counts = df['Livro'].value_counts().reset_index()
             verse_counts.columns = ['Livro', 'Contagem']
             
@@ -435,9 +481,47 @@ if uploaded_file is not None:
                 verse_counts['ID'] = verse_counts['Livro'].map(order_map)
                 verse_counts = verse_counts.sort_values('ID')
             
-            fig = px.bar(verse_counts, x='Livro', y='Contagem', color='Contagem', 
-                         color_continuous_scale=['#1e295a', '#F18F01'])
-            apply_theme_to_plot(fig)
+            # Gráfico refeito para legibilidade
+            # Fundo branco (shape) para destaque
+            fig = px.bar(
+                verse_counts, 
+                x='Livro', 
+                y='Contagem', 
+                text='Contagem',  # Adiciona rótulos de dados
+                color='Contagem',
+                color_continuous_scale=['#1e295a', '#F18F01']
+            )
+            
+            # Ajustes visuais profundos no gráfico
+            fig.update_traces(
+                texttemplate='%{text:.2s}', 
+                textposition='outside',
+                textfont_color='black', # Texto das barras em preto
+                marker_line_width=0
+            )
+            
+            fig.update_layout(
+                paper_bgcolor='rgba(255,255,255,0.9)', # Fundo branco semi-transparente como "shape"
+                plot_bgcolor='rgba(255,255,255,0.9)',
+                font=dict(color='black'), # Texto global preto
+                xaxis=dict(
+                    title="Livros Bíblicos",
+                    title_font=dict(size=14, color='black'),
+                    tickfont=dict(color='black'),
+                    showgrid=False
+                ),
+                yaxis=dict(
+                    title="Qtd. Versículos",
+                    title_font=dict(size=14, color='black'),
+                    tickfont=dict(color='black'),
+                    showgrid=True,
+                    gridcolor='#e0e0e0'
+                ),
+                coloraxis_showscale=False, # Remove barra de cor lateral para limpar
+                margin=dict(l=40, r=20, t=40, b=80),
+                height=500
+            )
+            
             st.plotly_chart(fig, use_container_width=True)
 
         # ---------------------------------------------------------
@@ -458,10 +542,24 @@ if uploaded_file is not None:
                 
             with c2:
                 st.markdown("#### Frequência Visual")
-                fig = px.bar(df_ent.head(20), x='Frequência', y='Entidade', orientation='h', 
-                             color='Frequência', color_continuous_scale='Blues')
-                fig.update_layout(yaxis={'categoryorder':'total ascending'})
-                apply_theme_to_plot(fig)
+                # Gráfico de barras laterais ajustado para legibilidade
+                fig = px.bar(
+                    df_ent.head(20), 
+                    x='Frequência', 
+                    y='Entidade', 
+                    orientation='h', 
+                    text='Frequência',
+                    color='Frequência', 
+                    color_continuous_scale='Blues'
+                )
+                fig.update_traces(textposition='outside')
+                fig.update_layout(
+                    yaxis={'categoryorder':'total ascending', 'tickfont': {'size': 12}},
+                    paper_bgcolor='rgba(255,255,255,0.8)', # Fundo "Shape"
+                    plot_bgcolor='rgba(255,255,255,0.8)',
+                    font_color='black',
+                    margin=dict(l=10, r=50, t=30, b=30)
+                )
                 st.plotly_chart(fig, use_container_width=True)
                 
             st.divider()
@@ -475,18 +573,35 @@ if uploaded_file is not None:
                 df_filtered = df[mask].copy()
                 df_filtered['Posicao_Global'] = df_filtered.index
                 
+                # Gráfico de ocorrências refeito (estilo "Barcode" preto com fundo claro)
                 fig_timeline = px.scatter(
                     df_filtered, 
                     x='ID_Global' if 'ID_Global' in df.columns else df_filtered.index, 
                     y='Livro', 
                     hover_data=['Capitulo', 'Versiculo', 'Texto'],
-                    title=f"Ocorrências de '{selected_entity}'",
-                    color='Livro'
+                    title=f"Dispersão de '{selected_entity}'",
                 )
-                fig_timeline.update_layout(showlegend=False)
-                apply_theme_to_plot(fig_timeline)
-                # Customizar marcadores para laranja
-                fig_timeline.update_traces(marker=dict(color='#F18F01', size=8, opacity=0.7))
+                
+                # Configuração para parecer o "antigo em cores pretas" mas legível
+                fig_timeline.update_traces(
+                    marker=dict(
+                        color='#1e295a', # Cor escura quase preto (Azul do tema muito escuro)
+                        symbol='line-ns-open', # Símbolo vertical tipo "risco"
+                        size=10, 
+                        opacity=0.8
+                    ),
+                    mode='markers'
+                )
+                
+                fig_timeline.update_layout(
+                    showlegend=False,
+                    paper_bgcolor='rgba(255,255,255,0.9)', # Fundo claro (Shape) para destaque
+                    plot_bgcolor='rgba(255,255,255,0.9)',
+                    font_color='black',
+                    xaxis=dict(showgrid=False, title="Progresso na Bíblia"),
+                    yaxis=dict(showgrid=True, gridcolor='#eee'),
+                    height=600
+                )
                 
                 st.plotly_chart(fig_timeline, use_container_width=True)
                 
@@ -514,6 +629,7 @@ if uploaded_file is not None:
             with st.container():
                 c_filter_1, c_filter_2 = st.columns(2)
                 with c_filter_1:
+                    # Label ajustado via CSS global
                     min_weight = st.slider("Força da Conexão (Peso Mínimo)", 1, 50, 5)
                 
                 all_available_nodes = sorted([k for k, v in node_counter.items() if v > 1])
@@ -566,7 +682,7 @@ if uploaded_file is not None:
 
                 edge_trace = go.Scatter(
                     x=edge_x, y=edge_y,
-                    line=dict(width=0.5, color='#4c5187'), # Azul médio para linhas
+                    line=dict(width=0.5, color='#4c5187'),
                     hoverinfo='none',
                     mode='lines')
 
@@ -594,10 +710,10 @@ if uploaded_file is not None:
                     hoverinfo='text',
                     text=[node for node in G.nodes()],
                     textposition="top center",
-                    textfont=dict(color='#1e295a', size=10), # Texto escuro
+                    textfont=dict(color='#1e295a', size=10),
                     marker=dict(
                         showscale=True,
-                        colorscale='Sunset', # Cores quentes (laranja/roxo)
+                        colorscale='Sunset',
                         reversescale=False,
                         color=node_colors,
                         size=node_size,
@@ -606,7 +722,6 @@ if uploaded_file is not None:
                 
                 fig_net = go.Figure(data=[edge_trace, node_trace])
                 apply_theme_to_plot(fig_net)
-                # Remover eixos para grafo limpo
                 fig_net.update_layout(
                     xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
@@ -625,6 +740,7 @@ if uploaded_file is not None:
             
             col_search, col_stats = st.columns([3, 1])
             with col_search:
+                # Label estilizado pelo CSS global
                 search_term = st.text_input("Buscar termo", placeholder="Ex: amor, espada, luz...")
             
             if search_term:
@@ -637,6 +753,7 @@ if uploaded_file is not None:
             st.divider()
             
             c_livro, c_cap = st.columns(2)
+            # Labels estilizados pelo CSS global
             livro_sel = c_livro.selectbox("Livro", df['Livro'].unique())
             caps_disponiveis = df[df['Livro'] == livro_sel]['Capitulo'].unique()
             cap_sel = c_cap.selectbox("Capítulo", sorted(caps_disponiveis))
@@ -646,13 +763,13 @@ if uploaded_file is not None:
             st.markdown(f"### {livro_sel} {cap_sel}")
             
             # Formatação bonita do texto corrido
-            texto_html = "<div style='background-color: white; padding: 20px; border-radius: 10px; border-left: 5px solid #F18F01;'>"
+            texto_html = "<div style='background-color: white; padding: 20px; border-radius: 10px; border-left: 5px solid #F18F01; box-shadow: 2px 2px 10px rgba(0,0,0,0.05);'>"
             for _, row in texto_capitulo.iterrows():
                 v = row['Versiculo']
                 t = row['Texto']
                 for ent in row['Entidades']:
                     t = t.replace(ent, f"<b style='color:#833500'>{ent}</b>")
-                texto_html += f"<sup><b>{v}</b></sup> {t} "
+                texto_html += f"<sup style='color:#1e295a; font-weight:bold;'>{v}</sup> {t} "
             texto_html += "</div>"
             
             st.markdown(texto_html, unsafe_allow_html=True)
@@ -671,6 +788,7 @@ if uploaded_file is not None:
                 st.warning("Insira a API Key na barra lateral.")
 
             c1, c2, c3 = st.columns(3)
+            # Labels estilizados pelo CSS global para cor do titulo
             livro_sel = c1.selectbox("Livro", df['Livro'].unique(), key='ia_livro')
             caps_disponiveis = df[df['Livro'] == livro_sel]['Capitulo'].unique()
             cap_sel = c2.selectbox("Capítulo", sorted(caps_disponiveis), key='ia_cap')
