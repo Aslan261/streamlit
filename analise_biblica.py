@@ -220,7 +220,7 @@ def load_data(file):
         st.error(f"Erro ao carregar arquivo: {e}")
         return None
 
-STOPWORDS_PT = set(['a', 'o', 'as', 'os', 'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'nos', 'nas', 'por', 'pelo', 'pela', 'para', 'que', 'e', 'é', 'era', 'foi', 'com', 'sem', 'seu', 'sua', 'seus', 'suas', 'ele', 'ela', 'eles', 'elas', 'mas', 'ou', 'quando', 'como', 'onde', 'quem', 'porque', 'se', 'eu', 'tu', 'nós', 'vós', 'me', 'te', 'lhe', 'nos', 'vos', 'lhes', 'mim', 'ti', 'si', 'este', 'esta', 'isto', 'esse', 'essa', 'isso', 'aquele', 'aquela', 'aquilo', 'meu', 'teu', 'nosso', 'vosso', 'tua', 'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo', 'não', 'eis', 'quis', 'então', 'amém', 'segunda'])
+STOPWORDS_PT = set(['a', 'o', 'as', 'os', 'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'nos', 'nas', 'por', 'pelo', 'pela', 'para', 'que', 'e', 'é', 'era', 'foi', 'com', 'sem', 'seu', 'sua', 'seus', 'suas', 'ele', 'ela', 'eles', 'elas', 'mas', 'ou', 'quando', 'como', 'onde', 'quem', 'porque', 'se', 'eu', 'tu', 'nós', 'vós', 'me', 'te', 'lhe', 'nos', 'vos', 'lhes', 'mim', 'ti', 'si', 'este', 'esta', 'isto', 'esse', 'essa', 'isso', 'aquele', 'aquela', 'aquilo', 'meu', 'teu', 'nosso', 'vosso', 'tua', 'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo', 'não', 'eis', 'quis', 'então', 'amém', 'segunda', 'Assim'])
 
 BIG_ENTITIES = ['Deus', 'Jesus', 'Senhor', 'Espírito', 'Moisés', 'Arão', 'Faraó', 'Josué', 'Davi', 'Saul', 'Salomão', 'Elias', 'Eliseu', 'Isaías', 'Jeremias', 'Ezequiel', 'Daniel', 'Pedro', 'Paulo', 'João', 'Tiago', 'Maria', 'José', 'Abraão', 'Isaque', 'Jacó', 'José', 'Judá', 'Pilatos', 'Herodes', 'Judas', 'Timóteo', 'Barnabé', 'Silas', 'Tito', 'Noé', 'Adão', 'Eva', 'Caim', 'Abel', 'Golias', 'Jonas', 'Jó', 'Samuel', 'Absalão', 'Nabucodonosor', 'Calebe']
 
@@ -467,7 +467,7 @@ if uploaded_file is not None:
             st.dataframe(df_ent, height=600, use_container_width=True)
             
             st.divider()
-            st.subheader("Rastreamento de Entidade (Modo Escuro)")
+            st.subheader("Rastreamento de Entidade")
             
             unique_entities_list = sorted(list(set(all_entities)))
             selected_entity = st.selectbox("Selecione uma entidade:", unique_entities_list)
