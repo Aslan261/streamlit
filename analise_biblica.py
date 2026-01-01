@@ -286,7 +286,7 @@ def fmt_num(num):
 # 2. INTERFACE E NAVEGAÇÃO
 # =========================================================
 
-st.sidebar.markdown("# ✝️ Seu Aplicativo Bíblico")
+st.sidebar.markdown("# ✝️ Seu Guia Bíblico")
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📥 Carregar Dados")
 uploaded_file = st.sidebar.file_uploader("Arquivo CSV/Excel", type=['csv', 'xlsx'], label_visibility="collapsed")
@@ -753,8 +753,8 @@ if uploaded_file is not None:
 else:
     st.markdown("""
     <div style='text-align: center; padding: 50px;'>
-        <h1 style='color: #1e295a;'>Bem-vindo ao seu caminho com Deus</h1>
-        <p style='font-size: 1.2rem; color: #5f5f5f;'>Sua central de inteligência e devoção bíblica diária.</p>
+        <h1 style='color: #1e295a;'>Porque eu bem sei os planos que tenho para vós, diz o Senhor...</h1>
+        <p style='font-size: 1.2rem; color: #5f5f5f;'>Aquele que habita no esconderijo do Altíssimo, à sombra do Onipotente descansará.</p>
         <hr style='width: 50%; margin: 20px auto; border-color: #F18F01;'>
         <p>📂 Para começar, faça o upload da bíblia <b>blivre.xlsx</b> na barra lateral.</p>
     </div>
