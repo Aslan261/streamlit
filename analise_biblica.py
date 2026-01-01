@@ -23,7 +23,6 @@ st.set_page_config(page_title="A Bíblia é o seu caminho", layout="wide", page_
 # =========================================================
 # 0. ESTILIZAÇÃO (CSS PERSONALIZADO)
 # =========================================================
-# Aplicando a paleta de cores solicitada e ajustes finos de UI
 st.markdown("""
 <style>
     /* VARIÁVEIS DE COR */
@@ -59,7 +58,6 @@ st.markdown("""
     [data-testid="stSidebar"] .stMarkdown p {
         color: var(--primary-300) !important;
     }
-    /* Separador na sidebar */
     [data-testid="stSidebar"] hr {
         border-color: var(--primary-200) !important;
     }
@@ -90,7 +88,7 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* LABELS DE INPUTS (Geral para todas as abas) */
+    /* LABELS DE INPUTS */
     .stDateInput label, .stTextInput label, .stSelectbox label, .stSlider label, .stNumberInput label {
         color: var(--primary-100) !important;
         font-weight: 600 !important;
@@ -144,14 +142,14 @@ st.markdown("""
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
-    /* TABELAS (DATAFRAME) */
+    /* TABELAS */
     [data-testid="stDataFrame"] {
         background-color: white;
         padding: 10px;
         border-radius: 10px;
     }
 
-    /* EXPANSORES (Devocional) */
+    /* EXPANSORES */
     .stExpander {
         background-color: white;
         border-radius: 10px;
@@ -171,7 +169,7 @@ st.markdown("""
         background-color: var(--bg-200);
         border-radius: 8px 8px 0 0;
         color: var(--text-200);
-        font-size: 1.1rem !important; /* Aumentado */
+        font-size: 1.1rem !important;
         font-weight: bold;
         padding: 10px 20px;
         border: none;
@@ -179,6 +177,16 @@ st.markdown("""
     .stTabs [aria-selected="true"] {
         background-color: var(--primary-100) !important;
         color: white !important;
+    }
+
+    /* ALERTAS PERSONALIZADOS */
+    .custom-info {
+        padding: 1rem;
+        background-color: #dbeafe; /* Azul claro */
+        color: #1e40af; /* Azul escuro texto */
+        border-radius: 0.5rem;
+        border-left: 5px solid #3b82f6;
+        margin-bottom: 1rem;
     }
 
 </style>
@@ -191,56 +199,28 @@ st.markdown("""
 @st.cache_data
 def load_data(file):
     try:
-        # Tenta ler como CSV padrão ou com separadores diferentes caso o usuário mude o formato
         df = pd.read_csv(file)
-        # Normalização de nomes de colunas para garantir compatibilidade
         cols_map = {
-            'Book Name': 'Livro', 
-            'Book Number': 'Livro_ID', 
-            'Chapter': 'Capitulo', 
-            'Verse': 'Versiculo', 
-            'Text': 'Texto', 
-            'Verse ID': 'ID_Global'
+            'Book Name': 'Livro', 'Book Number': 'Livro_ID', 
+            'Chapter': 'Capitulo', 'Verse': 'Versiculo', 
+            'Text': 'Texto', 'Verse ID': 'ID_Global'
         }
         df.rename(columns=cols_map, inplace=True, errors='ignore')
-        
-        # Garante que colunas essenciais existam
         required_cols = ['Livro', 'Capitulo', 'Versiculo', 'Texto']
         if not all(col in df.columns for col in required_cols):
             st.error(f"O arquivo deve conter as colunas: {required_cols}")
             return None
-            
         return df
     except Exception as e:
         st.error(f"Erro ao carregar arquivo: {e}")
         return None
 
-# Lista básica de stopwords e personagens para ajudar na extração simples
-STOPWORDS_PT = set([
-    'a', 'o', 'as', 'os', 'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 
-    'nos', 'nas', 'por', 'pelo', 'pela', 'para', 'que', 'e', 'é', 'era', 
-    'foi', 'com', 'sem', 'seu', 'sua', 'seus', 'suas', 'ele', 'ela', 'eles', 
-    'elas', 'mas', 'ou', 'quando', 'como', 'onde', 'quem', 'porque', 'se', 
-    'eu', 'tu', 'nós', 'vós', 'me', 'te', 'lhe', 'nos', 'vos', 'lhes', 
-    'mim', 'ti', 'si', 'este', 'esta', 'isto', 'esse', 'essa', 'isso', 
-    'aquele', 'aquela', 'aquilo', 'meu', 'teu', 'nosso', 'vosso', 'tua', 
-    'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo', 'não',
-    'eis', 'quis', 'então', 'amém', 'segunda'
-])
+STOPWORDS_PT = set(['a', 'o', 'as', 'os', 'de', 'do', 'da', 'dos', 'das', 'em', 'no', 'na', 'nos', 'nas', 'por', 'pelo', 'pela', 'para', 'que', 'e', 'é', 'era', 'foi', 'com', 'sem', 'seu', 'sua', 'seus', 'suas', 'ele', 'ela', 'eles', 'elas', 'mas', 'ou', 'quando', 'como', 'onde', 'quem', 'porque', 'se', 'eu', 'tu', 'nós', 'vós', 'me', 'te', 'lhe', 'nos', 'vos', 'lhes', 'mim', 'ti', 'si', 'este', 'esta', 'isto', 'esse', 'essa', 'isso', 'aquele', 'aquela', 'aquilo', 'meu', 'teu', 'nosso', 'vosso', 'tua', 'minha', 'nossa', 'vossa', 'senhor', 'deus', 'jesus', 'cristo', 'não', 'eis', 'quis', 'então', 'amém', 'segunda'])
 
-# Lista de principais figuras bíblicas para priorizar na busca
-BIG_ENTITIES = [
-    'Deus', 'Jesus', 'Senhor', 'Espírito', 'Moisés', 'Arão', 'Faraó', 'Josué', 
-    'Davi', 'Saul', 'Salomão', 'Elias', 'Eliseu', 'Isaías', 'Jeremias', 'Ezequiel', 
-    'Daniel', 'Pedro', 'Paulo', 'João', 'Tiago', 'Maria', 'José', 'Abraão', 
-    'Isaque', 'Jacó', 'José', 'Judá', 'Pilatos', 'Herodes', 'Judas', 'Timóteo',
-    'Barnabé', 'Silas', 'Tito', 'Noé', 'Adão', 'Eva', 'Caim', 'Abel', 'Golias',
-    'Jonas', 'Jó', 'Samuel', 'Absalão', 'Nabucodonosor', 'Calebe'
-]
+BIG_ENTITIES = ['Deus', 'Jesus', 'Senhor', 'Espírito', 'Moisés', 'Arão', 'Faraó', 'Josué', 'Davi', 'Saul', 'Salomão', 'Elias', 'Eliseu', 'Isaías', 'Jeremias', 'Ezequiel', 'Daniel', 'Pedro', 'Paulo', 'João', 'Tiago', 'Maria', 'José', 'Abraão', 'Isaque', 'Jacó', 'José', 'Judá', 'Pilatos', 'Herodes', 'Judas', 'Timóteo', 'Barnabé', 'Silas', 'Tito', 'Noé', 'Adão', 'Eva', 'Caim', 'Abel', 'Golias', 'Jonas', 'Jó', 'Samuel', 'Absalão', 'Nabucodonosor', 'Calebe']
 
 def simple_entity_extractor(text):
-    if not isinstance(text, str):
-        return []
+    if not isinstance(text, str): return []
     clean_text = re.sub(r'[^\w\s]', '', text)
     words = clean_text.split()
     entities = []
@@ -249,8 +229,7 @@ def simple_entity_extractor(text):
             entities.append(word)
             continue
         if i > 0 and word[0].isupper() and word.lower() not in STOPWORDS_PT:
-            if len(word) > 2:
-                entities.append(word)
+            if len(word) > 2: entities.append(word)
     return list(set(entities))
 
 @st.cache_data
@@ -273,19 +252,15 @@ def generate_reading_plan(df):
     
     plan = {}
     chunk_size = total_chapters / 365
-    
     current_idx = 0
     for day in range(1, 366):
         end_idx = int(day * chunk_size)
         daily_chapters = chapters_list[current_idx:end_idx]
         plan[day] = daily_chapters
         current_idx = end_idx
-        
     return plan, total_chapters
 
-# Função auxiliar para aplicar tema aos gráficos Plotly
 def apply_theme_to_plot(fig, transparent=True, dark_text=False):
-    # Configuração de fundo e fonte
     paper_color = 'rgba(0,0,0,0)' if transparent else 'white'
     plot_color = 'rgba(255,255,255,0.7)' if transparent else 'white'
     text_color = '#353535' if dark_text else '#353535'
@@ -299,7 +274,6 @@ def apply_theme_to_plot(fig, transparent=True, dark_text=False):
     )
     return fig
 
-# Helper para formatar números (milhar com ponto)
 def fmt_num(num):
     return f"{num:,.0f}".replace(",", ".")
 
@@ -307,10 +281,8 @@ def fmt_num(num):
 # 2. INTERFACE E NAVEGAÇÃO
 # =========================================================
 
-# Sidebar customizada
 st.sidebar.markdown("# ✝️ Seu Aplicativo Bíblico")
 st.sidebar.markdown("---")
-
 st.sidebar.markdown("### 📥 Carregar Dados")
 uploaded_file = st.sidebar.file_uploader("Arquivo CSV/Excel", type=['csv', 'xlsx'], label_visibility="collapsed")
 
@@ -330,7 +302,6 @@ if uploaded_file is not None:
         st.sidebar.success(f"Carregado: {fmt_num(len(df))} versículos")
         st.sidebar.markdown("---")
         
-        # Menu Principal
         menu = st.sidebar.radio("Navegação", [
             "🙏 Devocional Diário",
             "📊 Visão Geral", 
@@ -347,8 +318,6 @@ if uploaded_file is not None:
                 st.sidebar.markdown("### 🔑 Configuração IA")
                 api_key = st.sidebar.text_input("Gemini API Key", type="password", help="Chave do Google AI Studio")
 
-        # --- CONTEÚDO PRINCIPAL ---
-
         # ---------------------------------------------------------
         # DEVOCIONAL
         # ---------------------------------------------------------
@@ -358,12 +327,10 @@ if uploaded_file is not None:
             
             plan, total_chapters = generate_reading_plan(df)
             
-            # Container estilizado para controles
-            st.markdown('<div style="background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #c2baa6; margin-bottom: 20px;">', unsafe_allow_html=True)
+            # Removed the white background div wrapper as requested
             col_date, col_nav = st.columns([1, 2])
             with col_date:
                 today = datetime.now()
-                # O label já está ajustado pelo CSS global para cor do tema
                 selected_date = st.date_input("Selecione a Data", today)
                 day_of_year = selected_date.timetuple().tm_yday
                 if day_of_year > 365: day_of_year = 365
@@ -372,7 +339,6 @@ if uploaded_file is not None:
                 st.markdown(f"<p style='color:#1e295a; font-weight:bold; margin-bottom:0px;'>Progresso do Ano (Dia {day_of_year}/365)</p>", unsafe_allow_html=True)
                 progress = day_of_year / 365
                 st.progress(progress)
-            st.markdown('</div>', unsafe_allow_html=True)
 
             todays_chapters = plan.get(day_of_year, [])
 
@@ -383,38 +349,32 @@ if uploaded_file is not None:
                 for book, chap in todays_chapters:
                     reading_refs.append(f"{book} {chap}")
                 
-                if len(reading_refs) > 3:
-                    reading_title = ", ".join(reading_refs[:3]) + f" e mais {len(reading_refs)-3}"
-                else:
-                    reading_title = ", ".join(reading_refs)
+                reading_title = ", ".join(reading_refs[:3]) + f" e mais {len(reading_refs)-3}" if len(reading_refs) > 3 else ", ".join(reading_refs)
                 
                 st.subheader(f"📖 Leitura de Hoje: {reading_title}")
                 
-                # Abas estilizadas e aumentadas via CSS
                 tab_texto, tab_reflexao = st.tabs(["Texto Bíblico", "Reflexão com IA"])
                 
                 full_text_devocional = ""
                 
                 with tab_texto:
                     for book, chap in todays_chapters:
-                        # Título da seção
                         st.markdown(f"#### {book} {chap}")
                         subset = df[(df['Livro'] == book) & (df['Capitulo'] == chap)]
                         text_content = ""
                         
-                        # Expander com header em laranja (via CSS)
-                        with st.expander(f"Ler texto de {book} {chap}", expanded=True):
-                            # Montando HTML para melhor controle visual
-                            html_text = ""
-                            for _, row in subset.iterrows():
-                                vers = row['Versiculo']
-                                txt = row['Texto']
-                                text_content += f"{vers}. {txt} "
-                                html_text += f"<span style='color:#833500; font-weight:bold; font-size:0.8em; vertical-align:super;'>{vers}</span> <span style='color:#353535;'>{txt}</span> "
-                            st.markdown(f"<div style='line-height: 1.6;'>{html_text}</div>", unsafe_allow_html=True)
-                            
+                        # Removido expander, texto direto e quebrado por linha
+                        html_text = ""
+                        for _, row in subset.iterrows():
+                            vers = row['Versiculo']
+                            txt = row['Texto']
+                            text_content += f"{vers}. {txt} "
+                            # Quebra de linha para facilitar leitura
+                            html_text += f"<div style='margin-bottom: 8px;'><span style='color:#833500; font-weight:bold;'>{vers}.</span> <span style='color:#353535;'>{txt}</span></div>"
+                        
+                        st.markdown(html_text, unsafe_allow_html=True)
                         full_text_devocional += f"\n\nTexto de {book} {chap}:\n{text_content}"
-                        st.markdown("<br>", unsafe_allow_html=True)
+                        st.markdown("<hr style='border-color: #c2baa6; opacity: 0.5;'>", unsafe_allow_html=True)
                 
                 with tab_reflexao:
                     col_ia_1, col_ia_2 = st.columns([1, 3])
@@ -436,22 +396,14 @@ if uploaded_file is not None:
                                         Formate com Markdown bonito, usando negrito e itálico.
                                         Estrutura: Versículo Chave, Reflexão Profunda, Aplicação Prática, Oração.
                                         """
-                                        response = client.models.generate_content(
-                                            model='gemini-2.5-flash-lite',
-                                            contents=prompt_devocional
-                                        )
+                                        response = client.models.generate_content(model='gemini-2.5-flash-lite', contents=prompt_devocional)
                                         st.session_state['devocional_result'] = response.text
                                 except Exception as e:
                                     st.error(f"Erro: {e}")
                     
                     with col_ia_2:
-                        # Área de resultado com estilo de card
                         if 'devocional_result' in st.session_state:
-                            st.markdown(f"""
-                            <div style="background-color: white; padding: 30px; border-radius: 10px; border-left: 5px solid #F18F01; box-shadow: 2px 2px 15px rgba(0,0,0,0.05);">
-                                {st.session_state['devocional_result']}
-                            </div>
-                            """, unsafe_allow_html=True)
+                            st.markdown(f"""<div style="background-color: white; padding: 30px; border-radius: 10px; border-left: 5px solid #F18F01; box-shadow: 2px 2px 15px rgba(0,0,0,0.05);">{st.session_state['devocional_result']}</div>""", unsafe_allow_html=True)
                         else:
                             st.info("Clique no botão ao lado para gerar uma reflexão exclusiva para hoje.")
 
@@ -461,67 +413,41 @@ if uploaded_file is not None:
         elif menu == "📊 Visão Geral":
             st.title("Visão Macro")
             
-            # Métricas formatadas
+            # Espaço para descer os KPIs
+            st.markdown("<br>", unsafe_allow_html=True)
+            
             c1, c2, c3, c4 = st.columns(4)
             c1.metric("Livros", fmt_num(df['Livro'].nunique()))
             c2.metric("Capítulos", fmt_num(df.groupby(['Livro', 'Capitulo']).ngroups))
             c3.metric("Versículos", fmt_num(len(df)))
-            
             total_words = df['Texto'].astype(str).apply(lambda x: len(x.split())).sum()
             c4.metric("Palavras (aprox.)", fmt_num(total_words))
             
             st.markdown("### Distribuição de Conteúdo")
-            
-            # Preparação dos dados
             verse_counts = df['Livro'].value_counts().reset_index()
             verse_counts.columns = ['Livro', 'Contagem']
-            
             if 'Livro_ID' in df.columns:
                 order_map = df[['Livro', 'Livro_ID']].drop_duplicates().set_index('Livro')['Livro_ID']
                 verse_counts['ID'] = verse_counts['Livro'].map(order_map)
                 verse_counts = verse_counts.sort_values('ID')
             
-            # Gráfico refeito para legibilidade
-            # Fundo branco (shape) para destaque
             fig = px.bar(
-                verse_counts, 
-                x='Livro', 
-                y='Contagem', 
-                text='Contagem',  # Adiciona rótulos de dados
-                color='Contagem',
-                color_continuous_scale=['#1e295a', '#F18F01']
+                verse_counts, x='Livro', y='Contagem', 
+                color='Contagem', color_continuous_scale=['#1e295a', '#F18F01']
             )
             
-            # Ajustes visuais profundos no gráfico
-            fig.update_traces(
-                texttemplate='%{text:.2s}', 
-                textposition='outside',
-                textfont_color='black', # Texto das barras em preto
-                marker_line_width=0
-            )
-            
+            # Removemos eixo Y e labels conforme pedido
+            fig.update_traces(marker_line_width=0)
             fig.update_layout(
-                paper_bgcolor='rgba(255,255,255,0.9)', # Fundo branco semi-transparente como "shape"
+                paper_bgcolor='rgba(255,255,255,0.9)', 
                 plot_bgcolor='rgba(255,255,255,0.9)',
-                font=dict(color='black'), # Texto global preto
-                xaxis=dict(
-                    title="Livros Bíblicos",
-                    title_font=dict(size=14, color='black'),
-                    tickfont=dict(color='black'),
-                    showgrid=False
-                ),
-                yaxis=dict(
-                    title="Qtd. Versículos",
-                    title_font=dict(size=14, color='black'),
-                    tickfont=dict(color='black'),
-                    showgrid=True,
-                    gridcolor='#e0e0e0'
-                ),
-                coloraxis_showscale=False, # Remove barra de cor lateral para limpar
-                margin=dict(l=40, r=20, t=40, b=80),
+                font=dict(color='black'),
+                xaxis=dict(title=None, tickfont=dict(color='black'), showgrid=False),
+                yaxis=dict(title=None, showticklabels=False, showgrid=False, visible=False),
+                coloraxis_showscale=False,
+                margin=dict(l=20, r=20, t=20, b=60),
                 height=500
             )
-            
             st.plotly_chart(fig, use_container_width=True)
 
         # ---------------------------------------------------------
@@ -534,36 +460,26 @@ if uploaded_file is not None:
             entity_counts = Counter(all_entities).most_common(50)
             df_ent = pd.DataFrame(entity_counts, columns=['Entidade', 'Frequência'])
             
-            c1, c2 = st.columns([1, 2])
-            
-            with c1:
-                st.markdown("#### Top Mencionado")
-                st.dataframe(df_ent, height=500, use_container_width=True)
+            # Nova disposição Visual
+            col_metrics, col_chart = st.columns([1, 2])
+            with col_metrics:
+                st.markdown("#### 🔝 Top 3 Mais Citados")
+                if len(df_ent) >= 3:
+                    st.metric("1º Lugar", df_ent.iloc[0]['Entidade'], f"{df_ent.iloc[0]['Frequência']} menções")
+                    st.metric("2º Lugar", df_ent.iloc[1]['Entidade'], f"{df_ent.iloc[1]['Frequência']} menções")
+                    st.metric("3º Lugar", df_ent.iloc[2]['Entidade'], f"{df_ent.iloc[2]['Frequência']} menções")
                 
-            with c2:
-                st.markdown("#### Frequência Visual")
-                # Gráfico de barras laterais ajustado para legibilidade
-                fig = px.bar(
-                    df_ent.head(20), 
-                    x='Frequência', 
-                    y='Entidade', 
-                    orientation='h', 
-                    text='Frequência',
-                    color='Frequência', 
-                    color_continuous_scale='Blues'
-                )
-                fig.update_traces(textposition='outside')
-                fig.update_layout(
-                    yaxis={'categoryorder':'total ascending', 'tickfont': {'size': 12}},
-                    paper_bgcolor='rgba(255,255,255,0.8)', # Fundo "Shape"
-                    plot_bgcolor='rgba(255,255,255,0.8)',
-                    font_color='black',
-                    margin=dict(l=10, r=50, t=30, b=30)
-                )
+                with st.expander("Ver tabela completa"):
+                    st.dataframe(df_ent, use_container_width=True)
+
+            with col_chart:
+                st.markdown("#### 📊 Frequência Global")
+                fig = px.bar(df_ent.head(15), x='Frequência', y='Entidade', orientation='h', color='Frequência', color_continuous_scale='Oranges')
+                fig.update_layout(yaxis={'categoryorder':'total ascending'}, plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)', font_color='#1e295a')
                 st.plotly_chart(fig, use_container_width=True)
-                
+            
             st.divider()
-            st.subheader("Rastreamento de Entidade")
+            st.subheader("Rastreamento de Entidade (Modo Escuro)")
             
             unique_entities_list = sorted(list(set(all_entities)))
             selected_entity = st.selectbox("Selecione uma entidade:", unique_entities_list)
@@ -573,40 +489,30 @@ if uploaded_file is not None:
                 df_filtered = df[mask].copy()
                 df_filtered['Posicao_Global'] = df_filtered.index
                 
-                # Gráfico de ocorrências refeito (estilo "Barcode" preto com fundo claro)
+                # Gráfico com fundo PRETO conforme solicitado
                 fig_timeline = px.scatter(
                     df_filtered, 
                     x='ID_Global' if 'ID_Global' in df.columns else df_filtered.index, 
                     y='Livro', 
                     hover_data=['Capitulo', 'Versiculo', 'Texto'],
-                    title=f"Dispersão de '{selected_entity}'",
+                    title=f"Dispersão de '{selected_entity}' nas Escrituras",
                 )
                 
-                # Configuração para parecer o "antigo em cores pretas" mas legível
                 fig_timeline.update_traces(
-                    marker=dict(
-                        color='#1e295a', # Cor escura quase preto (Azul do tema muito escuro)
-                        symbol='line-ns-open', # Símbolo vertical tipo "risco"
-                        size=10, 
-                        opacity=0.8
-                    ),
+                    marker=dict(color='#00ffff', size=6, opacity=0.8, symbol='circle'), # Ciano neon para contraste
                     mode='markers'
                 )
                 
                 fig_timeline.update_layout(
-                    showlegend=False,
-                    paper_bgcolor='rgba(255,255,255,0.9)', # Fundo claro (Shape) para destaque
-                    plot_bgcolor='rgba(255,255,255,0.9)',
-                    font_color='black',
-                    xaxis=dict(showgrid=False, title="Progresso na Bíblia"),
-                    yaxis=dict(showgrid=True, gridcolor='#eee'),
+                    paper_bgcolor='black',
+                    plot_bgcolor='black',
+                    font_color='white',
+                    title_font_color='white',
+                    xaxis=dict(showgrid=False, title="Progresso na Bíblia", color='white'),
+                    yaxis=dict(showgrid=True, gridcolor='#333', color='white'),
                     height=600
                 )
-                
                 st.plotly_chart(fig_timeline, use_container_width=True)
-                
-                with st.expander(f"Ver versículos citados ({len(df_filtered)})"):
-                    st.dataframe(df_filtered[['Livro', 'Capitulo', 'Versiculo', 'Texto']], use_container_width=True)
 
         # ---------------------------------------------------------
         # REDES (SNA)
@@ -629,9 +535,7 @@ if uploaded_file is not None:
             with st.container():
                 c_filter_1, c_filter_2 = st.columns(2)
                 with c_filter_1:
-                    # Label ajustado via CSS global
                     min_weight = st.slider("Força da Conexão (Peso Mínimo)", 1, 50, 5)
-                
                 all_available_nodes = sorted([k for k, v in node_counter.items() if v > 1])
                 with c_filter_2:
                     focus_option = st.selectbox("Focar em:", ["Visão Geral (Top Conectados)"] + all_available_nodes)
@@ -640,7 +544,6 @@ if uploaded_file is not None:
             if focus_option == "Visão Geral (Top Conectados)":
                 max_nodes = st.slider("Máximo de Nós", 10, 200, 50)
 
-            # Grafo
             G = nx.Graph()
             if focus_option == "Visão Geral (Top Conectados)":
                 top_nodes = [n for n, c in node_counter.most_common(max_nodes)]
@@ -667,28 +570,22 @@ if uploaded_file is not None:
 
             if len(G.nodes) > 0:
                 pos = nx.spring_layout(G, k=0.6, seed=42)
-                
                 edge_x = []
                 edge_y = []
                 for edge in G.edges():
                     x0, y0 = pos[edge[0]]
                     x1, y1 = pos[edge[1]]
-                    edge_x.append(x0)
-                    edge_x.append(x1)
-                    edge_x.append(None)
-                    edge_y.append(y0)
-                    edge_y.append(y1)
-                    edge_y.append(None)
+                    edge_x.append(x0); edge_x.append(x1); edge_x.append(None)
+                    edge_y.append(y0); edge_y.append(y1); edge_y.append(None)
 
                 edge_trace = go.Scatter(
                     x=edge_x, y=edge_y,
                     line=dict(width=0.5, color='#4c5187'),
-                    hoverinfo='none',
-                    mode='lines')
+                    hoverinfo='none', mode='lines')
 
                 node_x = []
                 node_y = []
-                node_text = []
+                node_text = [] # Lista corrigida para hover
                 node_size = []
                 node_colors = []
                 
@@ -696,7 +593,8 @@ if uploaded_file is not None:
                     x, y = pos[node]
                     node_x.append(x)
                     node_y.append(y)
-                    node_text.append(f"{node} ({G.nodes[node].get('size', 0)})")
+                    # Corrigido: Texto específico para cada nó
+                    node_text.append(f"{node} (Menções: {G.nodes[node].get('size', 0)})")
                     sz = G.nodes[node].get('size', 10)
                     node_size.append(min(60, max(15, sz / 4)))
                     if focus_option != "Visão Geral (Top Conectados)" and node == focus_option:
@@ -708,17 +606,14 @@ if uploaded_file is not None:
                     x=node_x, y=node_y,
                     mode='markers+text',
                     hoverinfo='text',
-                    text=[node for node in G.nodes()],
+                    text=node_text, # Usando a lista correta
                     textposition="top center",
                     textfont=dict(color='#1e295a', size=10),
                     marker=dict(
-                        showscale=True,
-                        colorscale='Sunset',
-                        reversescale=False,
-                        color=node_colors,
-                        size=node_size,
-                        line_width=2,
-                        line_color='white'))
+                        showscale=True, colorscale='Sunset', reversescale=False,
+                        color=node_colors, size=node_size, line_width=2, line_color='white'
+                    )
+                )
                 
                 fig_net = go.Figure(data=[edge_trace, node_trace])
                 apply_theme_to_plot(fig_net)
@@ -727,7 +622,6 @@ if uploaded_file is not None:
                     yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                     margin=dict(b=0,l=0,r=0,t=20)
                 )
-                
                 st.plotly_chart(fig_net, use_container_width=True)
             else:
                 st.warning("Nenhum dado para exibir no grafo.")
@@ -737,23 +631,18 @@ if uploaded_file is not None:
         # ---------------------------------------------------------
         elif menu == "🔍 Explorador de Texto":
             st.title("Pesquisa Avançada")
-            
             col_search, col_stats = st.columns([3, 1])
             with col_search:
-                # Label estilizado pelo CSS global
                 search_term = st.text_input("Buscar termo", placeholder="Ex: amor, espada, luz...")
             
             if search_term:
                 results = df[df['Texto'].str.contains(search_term, case=False, na=False)]
                 with col_stats:
                     st.metric("Encontrados", len(results))
-                
                 st.dataframe(results[['Livro', 'Capitulo', 'Versiculo', 'Texto']], use_container_width=True)
             
             st.divider()
-            
             c_livro, c_cap = st.columns(2)
-            # Labels estilizados pelo CSS global
             livro_sel = c_livro.selectbox("Livro", df['Livro'].unique())
             caps_disponiveis = df[df['Livro'] == livro_sel]['Capitulo'].unique()
             cap_sel = c_cap.selectbox("Capítulo", sorted(caps_disponiveis))
@@ -762,14 +651,15 @@ if uploaded_file is not None:
             
             st.markdown(f"### {livro_sel} {cap_sel}")
             
-            # Formatação bonita do texto corrido
+            # Texto quebrado por linha para facilitar leitura
             texto_html = "<div style='background-color: white; padding: 20px; border-radius: 10px; border-left: 5px solid #F18F01; box-shadow: 2px 2px 10px rgba(0,0,0,0.05);'>"
             for _, row in texto_capitulo.iterrows():
                 v = row['Versiculo']
                 t = row['Texto']
                 for ent in row['Entidades']:
                     t = t.replace(ent, f"<b style='color:#833500'>{ent}</b>")
-                texto_html += f"<sup style='color:#1e295a; font-weight:bold;'>{v}</sup> {t} "
+                # Div por versículo para forçar quebra
+                texto_html += f"<div style='margin-bottom: 5px;'><sup style='color:#1e295a; font-weight:bold; margin-right: 5px;'>{v}</sup> {t}</div>"
             texto_html += "</div>"
             
             st.markdown(texto_html, unsafe_allow_html=True)
@@ -784,11 +674,15 @@ if uploaded_file is not None:
                 st.error("Biblioteca Google GenAI ausente.")
                 st.stop()
             
+            # Alerta azul claro personalizado
             if not api_key:
-                st.warning("Insira a API Key na barra lateral.")
+                st.markdown("""
+                <div class="custom-info">
+                    <strong>ℹ️ Atenção:</strong> Insira sua API Key do Google Gemini na barra lateral para ativar a inteligência artificial.
+                </div>
+                """, unsafe_allow_html=True)
 
             c1, c2, c3 = st.columns(3)
-            # Labels estilizados pelo CSS global para cor do titulo
             livro_sel = c1.selectbox("Livro", df['Livro'].unique(), key='ia_livro')
             caps_disponiveis = df[df['Livro'] == livro_sel]['Capitulo'].unique()
             cap_sel = c2.selectbox("Capítulo", sorted(caps_disponiveis), key='ia_cap')
@@ -836,7 +730,7 @@ if uploaded_file is not None:
                         st.error(f"Erro: {e}")
 
 else:
-    # Tela de Boas Vindas (Placeholder quando não tem arquivo)
+    # Tela de Boas Vindas
     st.markdown("""
     <div style='text-align: center; padding: 50px;'>
         <h1 style='color: #1e295a;'>Bem-vindo ao seu caminho com Deus</h1>
