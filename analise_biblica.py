@@ -45,41 +45,57 @@ st.markdown("""
         color: var(--text-100);
     }
 
-    /* --- SIDEBAR CORREÇÃO DE CONTRASTE --- */
+    /* --- SIDEBAR --- */
     [data-testid="stSidebar"] {
-        background-color: var(--bg-200); /* Fundo claro para contraste com texto preto */
-        border-right: 1px solid var(--bg-300);
+        background-color: var(--primary-100); /* Azul Profundo Original */
     }
     
-    /* TEXTO PRETO NA SIDEBAR (SOLICITAÇÃO DO USUÁRIO) */
-    [data-testid="stSidebar"] * {
-        color: black !important;
+    /* FORÇAR TEXTO CLARO NA SIDEBAR PARA CONTRASTE */
+    [data-testid="stSidebar"] h1, 
+    [data-testid="stSidebar"] h2, 
+    [data-testid="stSidebar"] h3, 
+    [data-testid="stSidebar"] label, 
+    [data-testid="stSidebar"] p, 
+    [data-testid="stSidebar"] span, 
+    [data-testid="stSidebar"] div {
+        color: var(--bg-100) !important; /* Texto Creme Claro */
     }
-    
-    /* Inputs na sidebar */
+
+    /* EXCEÇÃO: Inputs na sidebar (Fundo Branco -> Texto Escuro) */
     [data-testid="stSidebar"] div[data-baseweb="input"] {
         background-color: white !important;
-        border: 1px solid var(--text-200) !important;
+        border: 1px solid var(--primary-200) !important;
+    }
+    [data-testid="stSidebar"] input {
+        color: var(--text-100) !important; /* Texto escuro dentro do input */
+        -webkit-text-fill-color: var(--text-100) !important;
     }
     
     /* Separador */
     [data-testid="stSidebar"] hr {
-        border-color: var(--text-200) !important;
+        border-color: var(--primary-200) !important;
+        opacity: 0.5;
     }
     
-    /* RADIO BUTTONS (MENU) */
+    /* RADIO BUTTONS (MENU) NA SIDEBAR */
     div.row-widget.stRadio > div[role="radiogroup"] > label {
         background-color: transparent;
+        color: var(--bg-100) !important; /* Texto claro */
         border: 1px solid transparent;
         padding: 10px;
         border-radius: 5px;
         transition: all 0.3s;
     }
     div.row-widget.stRadio > div[role="radiogroup"] > label:hover {
-        background-color: rgba(0,0,0,0.05); /* Leve escurecimento no hover */
+        background-color: var(--primary-200); /* Azul médio no hover */
+        color: white !important;
+    }
+    /* Item selecionado do menu */
+    div.row-widget.stRadio > div[role="radiogroup"] [data-testid="stMarkdownContainer"] > p {
+        color: inherit !important;
     }
 
-    /* HEADER SUPERIOR (CORREÇÃO) */
+    /* HEADER SUPERIOR */
     header[data-testid="stHeader"] {
         background-color: transparent !important;
     }
@@ -89,7 +105,7 @@ st.markdown("""
         color: var(--primary-100) !important;
     }
 
-    /* CABEÇALHOS GERAIS */
+    /* CABEÇALHOS GERAIS (ÁREA PRINCIPAL) */
     h1, h2, h3, h4, h5, h6 {
         color: var(--primary-100) !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -142,7 +158,7 @@ st.markdown("""
     /* BOTÕES */
     .stButton > button {
         background-color: var(--accent-100);
-        color: white !important; /* Força branco */
+        color: white !important;
         border: none;
         border-radius: 8px;
         font-weight: bold;
@@ -465,14 +481,12 @@ if uploaded_file is not None:
                         st.info("Nenhum dia marcado ainda.")
                     else:
                         # CALCULO DE PROGRESSO
-                        # 1. Identificar todos os capítulos que 'deveriam' ter sido lidos nos dias marcados
                         read_chapters_set = set()
                         for d in st.session_state['read_days']:
                             chapters_in_day = plan.get(d, [])
                             for book, chap in chapters_in_day:
                                 read_chapters_set.add((book, chap))
                         
-                        # 2. Contar total de capítulos por livro no dataframe original
                         if 'Livro_ID' in df.columns:
                             all_chapters = df[['Livro_ID', 'Livro', 'Capitulo']].drop_duplicates()
                             book_order = df[['Livro', 'Livro_ID']].drop_duplicates().sort_values('Livro_ID')['Livro'].tolist()
@@ -482,14 +496,12 @@ if uploaded_file is not None:
                         
                         total_counts = all_chapters.groupby('Livro').size()
                         
-                        # 3. Contar capítulos lidos (do set)
                         if read_chapters_set:
                             read_df = pd.DataFrame(list(read_chapters_set), columns=['Livro', 'Capitulo'])
                             read_counts = read_df.groupby('Livro').size()
                         else:
                             read_counts = pd.Series()
 
-                        # 4. Exibir Barras de Progresso
                         st.markdown("#### Progresso por Livro")
                         
                         cols = st.columns(3)
@@ -499,10 +511,8 @@ if uploaded_file is not None:
                             total = total_counts.get(book, 0)
                             read = read_counts.get(book, 0)
                             
-                            # Mostra apenas livros que tem algum progresso (>0)
                             if total > 0 and read > 0:
                                 pct = read / total
-                                # Limita a 100% caso haja redundancia no plano
                                 if pct > 1.0: pct = 1.0
                                 
                                 with cols[count_displayed % 3]:
