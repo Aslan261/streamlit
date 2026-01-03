@@ -45,67 +45,38 @@ st.markdown("""
         color: var(--text-100);
     }
 
-    /* --- SIDEBAR --- */
+    /* SIDEBAR */
     [data-testid="stSidebar"] {
-        background-color: var(--primary-100); /* Azul Profundo Original */
+        background-color: var(--primary-100);
     }
-    
-    /* FORÇAR TEXTO CLARO NA SIDEBAR PARA CONTRASTE */
-    [data-testid="stSidebar"] h1, 
-    [data-testid="stSidebar"] h2, 
-    [data-testid="stSidebar"] h3, 
-    [data-testid="stSidebar"] label, 
-    [data-testid="stSidebar"] p, 
-    [data-testid="stSidebar"] span, 
-    [data-testid="stSidebar"] div {
-        color: var(--bg-100) !important; /* Texto Creme Claro */
+    [data-testid="stSidebar"] h1, [data-testid="stSidebar"] h2, [data-testid="stSidebar"] h3 {
+        color: var(--bg-100) !important;
     }
-
-    /* EXCEÇÃO: Inputs na sidebar (Fundo Branco -> Texto Escuro) */
-    [data-testid="stSidebar"] div[data-baseweb="input"] {
-        background-color: white !important;
-        border: 1px solid var(--primary-200) !important;
+    [data-testid="stSidebar"] label {
+        color: var(--bg-100) !important;
     }
-    [data-testid="stSidebar"] input {
-        color: var(--text-100) !important; /* Texto escuro dentro do input */
-        -webkit-text-fill-color: var(--text-100) !important;
+    [data-testid="stSidebar"] .stMarkdown p {
+        color: var(--primary-300) !important;
     }
-    
-    /* Separador */
     [data-testid="stSidebar"] hr {
         border-color: var(--primary-200) !important;
-        opacity: 0.5;
     }
     
-    /* RADIO BUTTONS (MENU) NA SIDEBAR */
+    /* RADIO BUTTONS (MENU) */
     div.row-widget.stRadio > div[role="radiogroup"] > label {
         background-color: transparent;
-        color: var(--bg-100) !important; /* Texto claro */
+        color: var(--primary-300);
         border: 1px solid transparent;
         padding: 10px;
         border-radius: 5px;
         transition: all 0.3s;
     }
     div.row-widget.stRadio > div[role="radiogroup"] > label:hover {
-        background-color: var(--primary-200); /* Azul médio no hover */
-        color: white !important;
-    }
-    /* Item selecionado do menu */
-    div.row-widget.stRadio > div[role="radiogroup"] [data-testid="stMarkdownContainer"] > p {
-        color: inherit !important;
+        background-color: var(--primary-200);
+        color: white;
     }
 
-    /* HEADER SUPERIOR */
-    header[data-testid="stHeader"] {
-        background-color: transparent !important;
-    }
-    /* Ícones do menu superior */
-    header[data-testid="stHeader"] .st-emotion-cache-15zrgzn, 
-    header[data-testid="stHeader"] button {
-        color: var(--primary-100) !important;
-    }
-
-    /* CABEÇALHOS GERAIS (ÁREA PRINCIPAL) */
+    /* CABEÇALHOS GERAIS */
     h1, h2, h3, h4, h5, h6 {
         color: var(--primary-100) !important;
         font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
@@ -117,20 +88,20 @@ st.markdown("""
         margin-bottom: 20px;
     }
     
-    /* LABELS DE INPUTS (Área Principal) */
-    .main .stDateInput label, .main .stTextInput label, .main .stSelectbox label, .main .stSlider label, .main .stNumberInput label, .main .stMultiSelect label {
+    /* LABELS DE INPUTS */
+    .stDateInput label, .stTextInput label, .stSelectbox label, .stSlider label, .stNumberInput label {
         color: var(--primary-100) !important;
         font-weight: 600 !important;
         font-size: 1rem !important;
     }
 
-    /* DATA INPUT & CAMPOS DE TEXTO - FUNDO CLARO (Área Principal) */
-    .main div[data-baseweb="input"], .main div[data-baseweb="select"] {
+    /* DATA INPUT & CAMPOS DE TEXTO - FUNDO CLARO */
+    div[data-baseweb="input"] {
         background-color: white !important;
         border: 1px solid var(--bg-300);
         color: var(--text-100);
     }
-    .main input {
+    input {
         color: var(--text-100) !important;
     }
 
@@ -158,7 +129,7 @@ st.markdown("""
     /* BOTÕES */
     .stButton > button {
         background-color: var(--accent-100);
-        color: white !important;
+        color: white;
         border: none;
         border-radius: 8px;
         font-weight: bold;
@@ -166,17 +137,19 @@ st.markdown("""
     }
     .stButton > button:hover {
         background-color: var(--accent-200);
-        color: white !important;
+        color: white;
         border: none;
         box-shadow: 0 4px 8px rgba(0,0,0,0.1);
     }
 
     /* TABELAS */
+    /* Remove fundo branco do dataframe container para ficar transparente na aba entidades se desejado,
+       ou mantem branco apenas na tabela interna */
     [data-testid="stDataFrame"] {
         background-color: transparent !important; 
     }
     [data-testid="stDataFrame"] > div {
-        background-color: white; 
+        background-color: white; /* Mantem a tabela legivel */
         border-radius: 10px;
         padding: 5px;
     }
@@ -193,7 +166,7 @@ st.markdown("""
         font-size: 1.1rem !important;
     }
 
-    /* ABAS (TABS) */
+    /* ABAS (TABS) - AUMENTADAS E EVIDENTES */
     .stTabs [data-baseweb="tab-list"] {
         gap: 8px;
     }
@@ -211,17 +184,11 @@ st.markdown("""
         color: white !important;
     }
 
-    /* TAG PERSONALIZADA */
-    selection-tag {
-        color: var(--primary-100);
-        font-weight: bold;
-    }
-
     /* ALERTAS PERSONALIZADOS */
     .custom-info {
         padding: 1rem;
-        background-color: #dbeafe; 
-        color: #1e40af; 
+        background-color: #dbeafe; /* Azul claro */
+        color: #1e40af; /* Azul escuro texto */
         border-radius: 0.5rem;
         border-left: 5px solid #3b82f6;
         margin-bottom: 1rem;
@@ -365,13 +332,11 @@ if uploaded_file is not None:
             
             plan, total_chapters = generate_reading_plan(df)
             
-            # Inicializar estado de leitura se não existir
-            if 'read_days' not in st.session_state:
-                st.session_state['read_days'] = []
-
+            # Removed the white background div wrapper as requested
             col_date, col_nav = st.columns([1, 2])
             with col_date:
                 today = datetime.now()
+                # Alteração: formato da data para DD/MM/YYYY
                 selected_date = st.date_input("Selecione a Data", today, format="DD/MM/YYYY")
                 day_of_year = selected_date.timetuple().tm_yday
                 if day_of_year > 365: day_of_year = 365
@@ -394,8 +359,7 @@ if uploaded_file is not None:
                 
                 st.subheader(f"📖 Leitura de Hoje: {reading_title}")
                 
-                # --- SISTEMA DE ABAS (INCLUINDO NOVA ABA DE PROGRESSO) ---
-                tab_texto, tab_reflexao, tab_progresso = st.tabs(["Texto Bíblico", "Reflexão com IA", "📈 Meu Progresso"])
+                tab_texto, tab_reflexao = st.tabs(["Texto Bíblico", "Reflexão com IA"])
                 
                 full_text_devocional = ""
                 
@@ -446,83 +410,6 @@ if uploaded_file is not None:
                             st.markdown(f"""<div style="background-color: white; padding: 30px; border-radius: 10px; border-left: 5px solid #F18F01; box-shadow: 2px 2px 15px rgba(0,0,0,0.05);">{st.session_state['devocional_result']}</div>""", unsafe_allow_html=True)
                         else:
                             st.info("Clique no botão ao lado para gerar uma reflexão exclusiva para hoje.")
-
-                # ABA 3: MEU PROGRESSO
-                with tab_progresso:
-                    st.markdown("### 🗓️ Controle de Leitura")
-                    st.markdown("Marque os dias que você já concluiu para atualizar seu progresso nos livros.")
-                    
-                    # Layout para seleção de dias
-                    c_sel, c_btn = st.columns([3, 1])
-                    with c_sel:
-                        days_selected = st.multiselect(
-                            "Dias Concluídos (1 a 365)", 
-                            options=range(1, 366),
-                            default=st.session_state['read_days']
-                        )
-                    
-                    with c_btn:
-                        st.markdown("<br>", unsafe_allow_html=True) # Espaçamento
-                        if st.button("Marcar até Hoje", use_container_width=True):
-                            st.session_state['read_days'] = list(range(1, day_of_year + 1))
-                            st.rerun()
-                        if st.button("Limpar Tudo", use_container_width=True):
-                            st.session_state['read_days'] = []
-                            st.rerun()
-
-                    # Atualiza estado
-                    if days_selected != st.session_state['read_days']:
-                        st.session_state['read_days'] = days_selected
-                        st.rerun()
-
-                    st.divider()
-
-                    if not st.session_state['read_days']:
-                        st.info("Nenhum dia marcado ainda.")
-                    else:
-                        # CALCULO DE PROGRESSO
-                        read_chapters_set = set()
-                        for d in st.session_state['read_days']:
-                            chapters_in_day = plan.get(d, [])
-                            for book, chap in chapters_in_day:
-                                read_chapters_set.add((book, chap))
-                        
-                        if 'Livro_ID' in df.columns:
-                            all_chapters = df[['Livro_ID', 'Livro', 'Capitulo']].drop_duplicates()
-                            book_order = df[['Livro', 'Livro_ID']].drop_duplicates().sort_values('Livro_ID')['Livro'].tolist()
-                        else:
-                            all_chapters = df[['Livro', 'Capitulo']].drop_duplicates()
-                            book_order = sorted(df['Livro'].unique())
-                        
-                        total_counts = all_chapters.groupby('Livro').size()
-                        
-                        if read_chapters_set:
-                            read_df = pd.DataFrame(list(read_chapters_set), columns=['Livro', 'Capitulo'])
-                            read_counts = read_df.groupby('Livro').size()
-                        else:
-                            read_counts = pd.Series()
-
-                        st.markdown("#### Progresso por Livro")
-                        
-                        cols = st.columns(3)
-                        count_displayed = 0
-                        
-                        for i, book in enumerate(book_order):
-                            total = total_counts.get(book, 0)
-                            read = read_counts.get(book, 0)
-                            
-                            if total > 0 and read > 0:
-                                pct = read / total
-                                if pct > 1.0: pct = 1.0
-                                
-                                with cols[count_displayed % 3]:
-                                    st.markdown(f"**{book}**")
-                                    st.progress(pct)
-                                    st.caption(f"{read}/{total} caps ({int(pct*100)}%)")
-                                count_displayed += 1
-                        
-                        if count_displayed == 0:
-                            st.info("Os dias marcados não contêm capítulos processados no plano atual.")
 
         # ---------------------------------------------------------
         # DASHBOARD
@@ -581,7 +468,7 @@ if uploaded_file is not None:
             st.dataframe(df_ent, height=600, use_container_width=True)
             
             st.divider()
-            st.subheader("Rastreamento de Entidade (Modo Escuro)")
+            st.subheader("Rastreamento de Entidade")
             
             unique_entities_list = sorted(list(set(all_entities)))
             selected_entity = st.selectbox("Selecione uma entidade:", unique_entities_list)
@@ -866,8 +753,8 @@ if uploaded_file is not None:
 else:
     st.markdown("""
     <div style='text-align: center; padding: 50px;'>
-        <h1 style='color: #1e295a;'>Bem-vindo ao seu caminho com Deus</h1>
-        <p style='font-size: 1.2rem; color: #5f5f5f;'>Sua central de inteligência e devoção bíblica diária.</p>
+        <h1 style='color: #1e295a;'>Porque eu bem sei os planos que tenho para vós, diz o Senhor...</h1>
+        <p style='font-size: 1.2rem; color: #5f5f5f;'>Aquele que habita no esconderijo do Altíssimo, à sombra do Onipotente descansará.</p>
         <hr style='width: 50%; margin: 20px auto; border-color: #F18F01;'>
         <p>📂 Para começar, faça o upload da bíblia <b>blivre.xlsx</b> na barra lateral.</p>
     </div>
