@@ -47,22 +47,24 @@ st.markdown("""
 
     /* --- SIDEBAR CORREÇÃO DE CONTRASTE --- */
     [data-testid="stSidebar"] {
-        background-color: var(--primary-100);
+        background-color: var(--bg-200); /* Fundo claro para contraste com texto preto */
+        border-right: 1px solid var(--bg-300);
     }
-    /* Força texto claro em TODOS os elementos da sidebar para corrigir bug no modo claro */
+    
+    /* TEXTO PRETO NA SIDEBAR (SOLICITAÇÃO DO USUÁRIO) */
     [data-testid="stSidebar"] * {
-        color: var(--bg-100) !important;
+        color: black !important;
     }
-    /* Exceção para o fundo de inputs que deve ser branco, mas o texto dentro deve ser escuro */
-    [data-testid="stSidebar"] input {
-        color: var(--text-100) !important;
-    }
+    
+    /* Inputs na sidebar */
     [data-testid="stSidebar"] div[data-baseweb="input"] {
         background-color: white !important;
+        border: 1px solid var(--text-200) !important;
     }
+    
     /* Separador */
     [data-testid="stSidebar"] hr {
-        border-color: var(--primary-200) !important;
+        border-color: var(--text-200) !important;
     }
     
     /* RADIO BUTTONS (MENU) */
@@ -74,7 +76,7 @@ st.markdown("""
         transition: all 0.3s;
     }
     div.row-widget.stRadio > div[role="radiogroup"] > label:hover {
-        background-color: var(--primary-200);
+        background-color: rgba(0,0,0,0.05); /* Leve escurecimento no hover */
     }
 
     /* HEADER SUPERIOR (CORREÇÃO) */
@@ -301,7 +303,7 @@ def fmt_num(num):
 # 2. INTERFACE E NAVEGAÇÃO
 # =========================================================
 
-st.sidebar.markdown("# ✝️ Seu Aplicativo Bíblico")
+st.sidebar.markdown("# ✝️ Seu Guia Bíblico")
 st.sidebar.markdown("---")
 st.sidebar.markdown("### 📥 Carregar Dados")
 uploaded_file = st.sidebar.file_uploader("Arquivo CSV/Excel", type=['csv', 'xlsx'], label_visibility="collapsed")
@@ -351,7 +353,6 @@ if uploaded_file is not None:
             if 'read_days' not in st.session_state:
                 st.session_state['read_days'] = []
 
-            # --- Cabeçalho do Dia ---
             col_date, col_nav = st.columns([1, 2])
             with col_date:
                 today = datetime.now()
@@ -377,12 +378,11 @@ if uploaded_file is not None:
                 
                 st.subheader(f"📖 Leitura de Hoje: {reading_title}")
                 
-                # --- SISTEMA DE ABAS ---
+                # --- SISTEMA DE ABAS (INCLUINDO NOVA ABA DE PROGRESSO) ---
                 tab_texto, tab_reflexao, tab_progresso = st.tabs(["Texto Bíblico", "Reflexão com IA", "📈 Meu Progresso"])
                 
                 full_text_devocional = ""
                 
-                # ABA 1: TEXTO
                 with tab_texto:
                     for book, chap in todays_chapters:
                         st.markdown(f"#### {book} {chap}")
@@ -400,7 +400,6 @@ if uploaded_file is not None:
                         full_text_devocional += f"\n\nTexto de {book} {chap}:\n{text_content}"
                         st.markdown("<hr style='border-color: #c2baa6; opacity: 0.5;'>", unsafe_allow_html=True)
                 
-                # ABA 2: REFLEXÃO IA
                 with tab_reflexao:
                     col_ia_1, col_ia_2 = st.columns([1, 3])
                     with col_ia_1:
@@ -432,62 +431,58 @@ if uploaded_file is not None:
                         else:
                             st.info("Clique no botão ao lado para gerar uma reflexão exclusiva para hoje.")
 
-                # ABA 3: PROGRESSO (NOVA)
+                # ABA 3: MEU PROGRESSO
                 with tab_progresso:
-                    st.markdown("### 🗓️ Acompanhamento de Leitura")
-                    st.write("Marque os dias que você já concluiu para atualizar seu progresso por livro.")
+                    st.markdown("### 🗓️ Controle de Leitura")
+                    st.markdown("Marque os dias que você já concluiu para atualizar seu progresso nos livros.")
                     
-                    # Controles de seleção de dias
-                    col_sel_1, col_sel_2 = st.columns([3, 1])
-                    with col_sel_1:
-                        # Multiselect para dias
+                    # Layout para seleção de dias
+                    c_sel, c_btn = st.columns([3, 1])
+                    with c_sel:
                         days_selected = st.multiselect(
-                            "Dias Concluídos (1 a 365)",
+                            "Dias Concluídos (1 a 365)", 
                             options=range(1, 366),
-                            default=st.session_state['read_days'],
-                            key='multiselect_days' # Chave para controle interno
+                            default=st.session_state['read_days']
                         )
                     
-                    with col_sel_2:
+                    with c_btn:
                         st.markdown("<br>", unsafe_allow_html=True) # Espaçamento
-                        if st.button("Marcar até Hoje"):
-                            # Atualiza session state para incluir todos os dias até hoje
+                        if st.button("Marcar até Hoje", use_container_width=True):
                             st.session_state['read_days'] = list(range(1, day_of_year + 1))
                             st.rerun()
-                        if st.button("Limpar Tudo"):
+                        if st.button("Limpar Tudo", use_container_width=True):
                             st.session_state['read_days'] = []
                             st.rerun()
 
-                    # Atualiza o estado com a seleção do multiselect
+                    # Atualiza estado
                     if days_selected != st.session_state['read_days']:
                         st.session_state['read_days'] = days_selected
-                    
+                        st.rerun()
+
                     st.divider()
-                    
-                    # Lógica de Cálculo de Progresso
+
                     if not st.session_state['read_days']:
-                        st.info("Nenhum dia marcado como lido ainda.")
+                        st.info("Nenhum dia marcado ainda.")
                     else:
-                        # 1. Coletar todos os capítulos lidos baseados nos dias marcados
-                        read_chapters_set = set() # Set de (Livro, Capitulo)
+                        # CALCULO DE PROGRESSO
+                        # 1. Identificar todos os capítulos que 'deveriam' ter sido lidos nos dias marcados
+                        read_chapters_set = set()
                         for d in st.session_state['read_days']:
                             chapters_in_day = plan.get(d, [])
                             for book, chap in chapters_in_day:
                                 read_chapters_set.add((book, chap))
                         
-                        # 2. Contar total de capítulos por livro no DF original
+                        # 2. Contar total de capítulos por livro no dataframe original
                         if 'Livro_ID' in df.columns:
-                            # Ordenar livros pela ordem correta
                             all_chapters = df[['Livro_ID', 'Livro', 'Capitulo']].drop_duplicates()
                             book_order = df[['Livro', 'Livro_ID']].drop_duplicates().sort_values('Livro_ID')['Livro'].tolist()
                         else:
                             all_chapters = df[['Livro', 'Capitulo']].drop_duplicates()
                             book_order = sorted(df['Livro'].unique())
-
+                        
                         total_counts = all_chapters.groupby('Livro').size()
                         
-                        # 3. Contar lidos por livro
-                        # Converte set para DF para facilitar contagem
+                        # 3. Contar capítulos lidos (do set)
                         if read_chapters_set:
                             read_df = pd.DataFrame(list(read_chapters_set), columns=['Livro', 'Capitulo'])
                             read_counts = read_df.groupby('Livro').size()
@@ -497,18 +492,27 @@ if uploaded_file is not None:
                         # 4. Exibir Barras de Progresso
                         st.markdown("#### Progresso por Livro")
                         
-                        # Grid para exibir
                         cols = st.columns(3)
+                        count_displayed = 0
+                        
                         for i, book in enumerate(book_order):
                             total = total_counts.get(book, 0)
                             read = read_counts.get(book, 0)
                             
-                            if total > 0 and read > 0: # Mostrar apenas se tiver iniciado ou se quiser mostrar todos remova 'and read > 0'
+                            # Mostra apenas livros que tem algum progresso (>0)
+                            if total > 0 and read > 0:
                                 pct = read / total
-                                with cols[i % 3]:
+                                # Limita a 100% caso haja redundancia no plano
+                                if pct > 1.0: pct = 1.0
+                                
+                                with cols[count_displayed % 3]:
                                     st.markdown(f"**{book}**")
                                     st.progress(pct)
                                     st.caption(f"{read}/{total} caps ({int(pct*100)}%)")
+                                count_displayed += 1
+                        
+                        if count_displayed == 0:
+                            st.info("Os dias marcados não contêm capítulos processados no plano atual.")
 
         # ---------------------------------------------------------
         # DASHBOARD
